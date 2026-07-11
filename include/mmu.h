@@ -3,8 +3,9 @@
 
 #include <iostream>
 #include <stdint.h>
+#include <string>
 
-const uint32_t MEMORY_SIZE = 65535;
+const uint32_t MEMORY_SIZE = 65536;
 
 class MMU {
 public:
@@ -13,9 +14,11 @@ public:
 
     bool load_rom(std::string rom_path);
 
-private:
-    uint8_t memory[MEMORY_SIZE];
+    void write(uint16_t address, uint8_t value);
+    uint8_t read(uint16_t address);
 
+private:
+    uint8_t memory[MEMORY_SIZE] = {};
 };
 
 #endif
