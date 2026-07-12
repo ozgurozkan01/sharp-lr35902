@@ -3,11 +3,19 @@
 #include <iostream>
 #include <stdint.h>
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc < 2)
+    {
+        std::cerr << "You did not enter rom path correctly !" << std::endl;
+        return -1;
+    }
+    
+    std::string rom_path = argv[1];
 
     MMU mmu;
 
-    if (!mmu.load_rom("roms/01-special.gb")) {
+    if (!mmu.load_rom(rom_path)) {
         return -1;
     }
     
