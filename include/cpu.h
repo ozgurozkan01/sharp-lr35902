@@ -17,16 +17,6 @@ typedef union {
 
 } Register_pair;
 
-
-class CPU {
-public:
-
-    CPU(MMU &mmu);
-
-    void execute_instructions();
-
-private:
-    
     enum class Flag : uint8_t {
         carry       = 0x10,
         half_carry  = 0x20,
@@ -34,17 +24,37 @@ private:
         zero        = 0x80
     };
 
-    void print_debug();
-    void update_clock_cycles(uint8_t cycle);
 
-    void inc(uint8_t &reg8);
-    void inc(uint16_t &reg16);
+class CPU {
+public:
 
-    void jp();
+    CPU(MMU &mmu) noexcept;
+
+    void execute_instructions() noexcept;
+
+    enum class Flag : uint8_t {
+        carry       = 0x10,
+        half_carry  = 0x20,
+        subtraction = 0x40,
+        zero        = 0x80
+    };
+
+private:
+    void print_debug() noexcept;
+    void update_clock_cycles(uint8_t cycle) noexcept;
+
+    void set_flag(Flag flag) noexcept;
+    void reset_flag(Flag flag) noexcept;
+    [[nodiscard]] bool get_flag(Flag flag) const noexcept;
+
+    void inc(uint8_t &reg8) noexcept;
+    void inc(uint16_t &reg16) noexcept;
+
+    void jp() noexcept;
 
     void ld(uint16_t &reg16);
-    void ld(uint8_t &target, uint8_t value);
-    void ld(uint16_t address, uint8_t value);
+    void ld(uint8_t &target, uint8_t value) noexcept;
+    void ld(uint16_t address, uint8_t value) noexcept;
 
     Register_pair af;
     Register_pair bc;

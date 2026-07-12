@@ -2,7 +2,7 @@
 
 #define DEBUG_MOD true
 
-CPU::CPU(MMU &mmu) :
+CPU::CPU(MMU &mmu) noexcept :
     mmu(mmu)
 {
     af.word = 0x01B0;
@@ -15,7 +15,7 @@ CPU::CPU(MMU &mmu) :
     total_cycle = 0;
 }
 
-void CPU::execute_instructions() {
+void CPU::execute_instructions() noexcept {
     
     uint8_t opcode = mmu.read(pc);
     uint8_t cycle = cpu_clock_cycles[opcode];
@@ -46,6 +46,9 @@ void CPU::execute_instructions() {
         case 0x12:
             ld(de.word, af.bytes.high);
             break;
+        case 0x1c:
+
+            break;
         case 0x21:
             ld(hl.word);
             break;
@@ -71,11 +74,15 @@ void CPU::execute_instructions() {
     }
 }
 
-void CPU::print_debug() {
+void CPU::set_flag(Flag flag) noexcept { af.bytes.low |= static_cast<uint8_t>(flag); }
+void CPU::reset_flag(Flag flag) noexcept { af.bytes.low &= ~static_cast<uint8_t>(flag); }
+bool CPU::get_flag(Flag flag) const noexcept { return (af.bytes.low & static_cast<uint8_t>(flag)) != 0; }
+
+void CPU::print_debug() noexcept {
 
 }
 
-void CPU::update_clock_cycles(uint8_t cycle) {
+void CPU::update_clock_cycles(uint8_t cycle) noexcept {
     total_cycle += cycle;
 }
 
@@ -85,7 +92,7 @@ void CPU::jp() {
     pc = (high << 8) | low;
 }
 
-void CPU::ld(uint16_t &reg16) {
+void CPU::ld(uint16_t &reg16) noexcept {
     uint8_t low = mmu.read(pc + 1);
     uint8_t high = mmu.read(pc + 2);
     reg16 = (high << 8) | low;
@@ -93,20 +100,20 @@ void CPU::ld(uint16_t &reg16) {
     pc += 3;
 }
 
-void CPU::ld(uint8_t &target, uint8_t value) {
+void CPU::ld(uint8_t &target, uint8_t value) noexcept {
     target = value;
     pc++;
 }
 
-void CPU::ld(uint16_t address, uint8_t value) {
+void CPU::ld(uint16_t address, uint8_t value) noexcept {
     mmu.write(address, value);
     pc++;
 }
 
-void CPU::inc(uint8_t &reg8) {
-
+void CPU::inc(uint8_t &reg8) noexcept {
+    
 }
 
-void CPU::inc(uint16_t &reg16) {
+void CPU::inc(uint16_t &reg16) noexcept {
 
 }
