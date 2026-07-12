@@ -51,8 +51,9 @@ private:
     void inc(uint16_t &reg16) noexcept;
 
     void jp() noexcept;
+    void jr_cc(bool condition) noexcept;
 
-    void ld(uint16_t &reg16);
+    void ld(uint16_t &reg16) noexcept;
     void ld(uint8_t &target, uint8_t value) noexcept;
     void ld(uint16_t address, uint8_t value) noexcept;
 

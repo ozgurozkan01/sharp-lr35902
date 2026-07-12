@@ -1,4 +1,5 @@
 #include "../include/cpu.h"
+#include <iomanip>
 
 #define DEBUG_MOD true
 
@@ -20,11 +21,13 @@ void CPU::execute_instructions() noexcept {
     uint8_t opcode = mmu.read(pc);
     uint8_t cycle = cpu_clock_cycles[opcode];
     
-    update_clock_cycles(cycle);
 
 #if DEBUG_MOD
     print_debug();
 #endif
+
+    update_clock_cycles(cycle);
+
     switch (opcode)
     {
         case 0x0:
@@ -46,8 +49,14 @@ void CPU::execute_instructions() noexcept {
         case 0x12:
             ld(de.word, af.bytes.high);
             break;
+        case 0x14:
+            inc(de.bytes.high);
+            break;
         case 0x1c:
-
+            inc(de.bytes.low);
+            break;
+        case 0x20:
+            jr_cc(!get_flag(Flag::zero));
             break;
         case 0x21:
             ld(hl.word);
@@ -79,17 +88,45 @@ void CPU::reset_flag(Flag flag) noexcept { af.bytes.low &= ~static_cast<uint8_t>
 bool CPU::get_flag(Flag flag) const noexcept { return (af.bytes.low & static_cast<uint8_t>(flag)) != 0; }
 
 void CPU::print_debug() noexcept {
-
+    std::cout  
+          << "PC: 0x" << std::setfill('0') << std::setw(4) << std::hex << pc 
+          << " | SP: 0x" << std::setfill('0') << std::setw(4) << sp 
+          << " | Opcode: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(mmu.read(pc))
+          << " | A: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(af.bytes.high) 
+          << " | BC: 0x" << std::setfill('0') << std::setw(4) << bc.word
+          << " | DE: 0x" << std::setfill('0') << std::setw(4) << de.word
+          << " | HL: 0x" << std::setfill('0') << std::setw(4) << hl.word
+          << " | Cycles: " << std::dec << total_cycle
+          << " - Flags: ["
+          << ((get_flag(Flag::zero))        ? 'Z' : '-')
+          << ((get_flag(Flag::subtraction)) ? 'N' : '-')
+          << ((get_flag(Flag::half_carry))  ? 'H' : '-')
+          << ((get_flag(Flag::carry))       ? 'C' : '-')
+          << "]" << std::endl; 
 }
 
 void CPU::update_clock_cycles(uint8_t cycle) noexcept {
     total_cycle += cycle;
 }
 
-void CPU::jp() {
+void CPU::jp() noexcept {
     uint8_t low = mmu.read(pc + 1);
     uint8_t high = mmu.read(pc + 2);
     pc = (high << 8) | low;
+}
+
+void CPU::jr_cc(bool condition) noexcept {
+
+    if (condition)
+    {
+        uint8_t unsigned_offset = mmu.read(pc + 1);
+        int8_t signed_offset = static_cast<int8_t>(unsigned_offset);
+        pc += signed_offset;
+        
+        update_clock_cycles(4);
+    }
+    
+    pc += 2;
 }
 
 void CPU::ld(uint16_t &reg16) noexcept {
@@ -111,9 +148,18 @@ void CPU::ld(uint16_t address, uint8_t value) noexcept {
 }
 
 void CPU::inc(uint8_t &reg8) noexcept {
-    
+    uint8_t old_value = reg8;
+    reg8++;
+    pc++;
+
+    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    (old_value & 0x0f) == 0x0f ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
 }
 
 void CPU::inc(uint16_t &reg16) noexcept {
+    reg16++;
+    pc++;
+
 
 }
