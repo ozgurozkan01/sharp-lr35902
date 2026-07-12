@@ -5,17 +5,17 @@
 #include <stdint.h>
 #include <string>
 
-const uint32_t MEMORY_SIZE = 65536;
+constexpr uint32_t MEMORY_SIZE = 65536;
 
 class MMU {
 public:
 
-    MMU();
+    MMU() noexcept;
 
-    bool load_rom(std::string rom_path);
+    [[nodiscard]] bool load_rom(std::string rom_path) noexcept;
 
-    void write(uint16_t address, uint8_t value);
-    uint8_t read(uint16_t address);
+    void write(uint16_t address, uint8_t value) noexcept;
+    uint8_t read(uint16_t address) noexcept;
 
 private:
     uint8_t memory[MEMORY_SIZE] = {};

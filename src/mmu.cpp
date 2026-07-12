@@ -1,19 +1,19 @@
 #include "../include/mmu.h"
 #include <fstream>
 
-MMU::MMU() {
+MMU::MMU() noexcept {
 
 }
 
-void MMU::write(uint16_t address, uint8_t value) {
+void MMU::write(uint16_t address, uint8_t value) noexcept {
     memory[address] = value;
 }
 
-uint8_t MMU::read(uint16_t address) {
+uint8_t MMU::read(uint16_t address) noexcept {
     return memory[address];
 }
 
-bool MMU::load_rom(std::string path) {
+bool MMU::load_rom(std::string path) noexcept {
     std::ifstream rom(path, std::ios::binary | std::ios::ate);
 
     if (!rom.is_open()) {
