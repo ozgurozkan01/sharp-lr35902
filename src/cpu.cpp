@@ -6,6 +6,8 @@
 CPU::CPU(MMU &mmu) noexcept :
     mmu(mmu)
 {
+    is_interrupt_enabled = true;
+
     af.word = 0x01B0;
     bc.word = 0x0013;
     de.word = 0x00d8;
@@ -36,13 +38,15 @@ void CPU::execute_instructions() noexcept {
         case 0x01:
             ld(bc.word);
             break;
-        case 0x0E:
-        {
-            uint8_t data = mmu.read(pc + 1);
-            ld(bc.bytes.low, data);
-            pc++;
+        case 0x0d:
+            dec(bc.bytes.low);
             break;
-        }
+        case 0x0e:
+            ld(bc.bytes.low);
+            break;
+        case 0x18:
+            jr();
+            break;
         case 0x11:
             ld(de.word);
             break;
@@ -62,20 +66,60 @@ void CPU::execute_instructions() noexcept {
             ld(hl.word);
             break;
         case 0x2a:
-        {
-            uint8_t data = mmu.read(hl.word);
-            ld(af.bytes.high, data);
-            hl.word++;
+            ld(af.bytes.high, mmu.read(hl.word++));
             break;
-        }
         case 0x31:
             ld(sp);
+            break;
+        case 0x3e:
+            ld(af.bytes.high);
             break;
         case 0x47:
             ld(bc.bytes.high, af.bytes.high);
             break;
+        case 0x78:
+            ld(af.bytes.high, bc.bytes.high);
+            break;
+        case 0x7c:
+            ld(af.bytes.high, hl.bytes.high);
+            break;
+        case 0x7d:
+            ld(af.bytes.high, hl.bytes.low);
+            break;
         case 0xc3:
             jp();
+            break;
+        case 0xc9:
+            ret();
+            break;
+        case 0xcd:
+            call();
+            break;
+        case 0xe0:
+            ldh_write(mmu.read(pc + 1));
+            pc += 2;
+            break;
+        case 0xe1:
+            hl.word = pop();
+            break;
+        case 0xe5:
+            push(hl.word);
+            break;
+        case 0xea:
+        {
+            uint8_t low = mmu.read(pc + 1);
+            uint8_t high = mmu.read(pc + 2);
+            uint16_t address = (high << 8) | low;
+            ld(address, af.bytes.high);
+            pc += 2;
+            break;
+        } 
+        case 0xf3:
+            is_interrupt_enabled = false;
+            pc++;
+            break;
+        case 0xf5:
+            push(af.word);
             break;
         default:
             std::cout << "DEFAULT CASE RAN : 0x" << std::hex << (int)opcode << std::endl;
@@ -109,24 +153,78 @@ void CPU::update_clock_cycles(uint8_t cycle) noexcept {
     total_cycle += cycle;
 }
 
+void CPU::call() noexcept {
+    uint8_t low = mmu.read(pc + 1);
+    uint8_t high = mmu.read(pc + 2);
+    uint16_t jump_address = (high << 8) | low;
+
+    push(pc + 3);
+
+    pc = jump_address;
+}
+
+void CPU::ret() noexcept {
+    pc = pop();
+}
+
+void CPU::ret_cc(bool condition) noexcept {
+    if (condition)
+    {
+        ret();
+        update_clock_cycles(12);
+        return;
+    }
+    pc++;
+}
+
+void CPU::push(const uint16_t address) noexcept {
+    mmu.write(sp - 1, (address >> 8) & 0xFF);
+    mmu.write(sp - 2, address & 0xFF);
+    sp -= 2;
+    pc++;
+}
+
+uint16_t CPU::pop() noexcept {
+
+    uint8_t low = mmu.read(sp);
+    uint8_t high = mmu.read(sp + 1);
+    uint16_t popped_address = (high << 8) | low;
+
+    sp += 2;
+    pc++;
+
+    return popped_address;
+}
+
 void CPU::jp() noexcept {
     uint8_t low = mmu.read(pc + 1);
     uint8_t high = mmu.read(pc + 2);
     pc = (high << 8) | low;
 }
 
+void CPU::jr() noexcept {
+    uint8_t unsigned_offset = mmu.read(pc + 1);
+    int8_t signed_offset = static_cast<int8_t>(unsigned_offset);
+    pc += signed_offset;
+    pc += 2;
+}
+
 void CPU::jr_cc(bool condition) noexcept {
 
     if (condition)
     {
-        uint8_t unsigned_offset = mmu.read(pc + 1);
-        int8_t signed_offset = static_cast<int8_t>(unsigned_offset);
-        pc += signed_offset;
-        
+        jr();
         update_clock_cycles(4);
+        return;
     }
     
     pc += 2;
+}
+
+void CPU::ld(uint8_t &reg8) noexcept {
+    uint8_t data = mmu.read(pc + 1);
+    ld(reg8, data);
+    pc++;
 }
 
 void CPU::ld(uint16_t &reg16) noexcept {
@@ -147,6 +245,14 @@ void CPU::ld(uint16_t address, uint8_t value) noexcept {
     pc++;
 }
 
+void CPU::ldh_read(uint8_t offset) noexcept {
+    af.bytes.high = mmu.read(0xff00 + offset);
+    }
+
+void CPU::ldh_write(uint8_t offset) noexcept {
+    mmu.write(0xff00 + offset, af.bytes.high);
+}
+
 void CPU::inc(uint8_t &reg8) noexcept {
     uint8_t old_value = reg8;
     reg8++;
@@ -158,8 +264,16 @@ void CPU::inc(uint8_t &reg8) noexcept {
 }
 
 void CPU::inc(uint16_t &reg16) noexcept {
-    reg16++;
+    
+}
+
+
+void CPU::dec(uint8_t &reg8) noexcept {
+    uint8_t old_value = reg8;
+    reg8--;
     pc++;
 
-
+    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    set_flag(Flag::subtraction);
+    (old_value & 0x0f) == 0x0 ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
 }

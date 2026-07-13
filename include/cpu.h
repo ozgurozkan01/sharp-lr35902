@@ -17,13 +17,6 @@ typedef union {
 
 } Register_pair;
 
-    enum class Flag : uint8_t {
-        carry       = 0x10,
-        half_carry  = 0x20,
-        subtraction = 0x40,
-        zero        = 0x80
-    };
-
 
 class CPU {
 public:
@@ -47,19 +40,35 @@ private:
     void reset_flag(Flag flag) noexcept;
     [[nodiscard]] bool get_flag(Flag flag) const noexcept;
 
+    void call() noexcept;
+
     void inc(uint8_t &reg8) noexcept;
     void inc(uint16_t &reg16) noexcept;
 
+    void dec(uint8_t &reg8) noexcept;
+    // void dec(uint16_t &reg16) noexcept;
+
     void jp() noexcept;
+    void jr() noexcept;
     void jr_cc(bool condition) noexcept;
 
     void ld(uint16_t &reg16) noexcept;
+    void ld(uint8_t &reg8) noexcept;
     void ld(uint8_t &target, uint8_t value) noexcept;
     void ld(uint16_t address, uint8_t value) noexcept;
 
+    void ldh_read(uint8_t offset) noexcept;
+    void ldh_write(uint8_t offset) noexcept;
+
+    void push(const uint16_t address) noexcept;
+    uint16_t pop() noexcept;
+
+    void ret() noexcept;
+    void ret_cc(bool condition) noexcept;
+
     Register_pair af;
     Register_pair bc;
-    Register_pair de;
+    Register_pair de;   
     Register_pair hl;
 
     uint16_t sp;
@@ -67,6 +76,8 @@ private:
 
     MMU &mmu;
     
+    bool is_interrupt_enabled;
+
     uint64_t total_cycle;
     const uint8_t cpu_clock_cycles[256] = {
     //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -87,7 +98,6 @@ private:
         12, 12, 8,  0,  0,  16, 8,  16, 16, 4,  16, 0,  0,  0,  8,  16, // E
         12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4,  0,  0,  8,  16  // F
     };
-        
 };
 
 #endif
