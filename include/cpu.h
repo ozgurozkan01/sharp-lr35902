@@ -24,6 +24,7 @@ public:
     CPU(MMU &mmu) noexcept;
 
     void execute_instructions() noexcept;
+    void execute_cb_instructions() noexcept;
 
     enum class Flag : uint8_t {
         carry       = 0x10,
@@ -40,7 +41,15 @@ private:
     void reset_flag(Flag flag) noexcept;
     [[nodiscard]] bool get_flag(Flag flag) const noexcept;
 
+    void add(uint8_t value) noexcept;
+
+    void bitwise_and(uint8_t value) noexcept;
+    void bitwise_or(uint8_t value) noexcept; 
+    void bitwise_xor(uint8_t value) noexcept;    
+
     void call() noexcept;
+    void call_cc(bool condition) noexcept;
+    void cp(uint8_t value) noexcept;
 
     void inc(uint8_t &reg8) noexcept;
     void inc(uint16_t &reg16) noexcept;
@@ -65,6 +74,8 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
+
+    void sub(uint8_t value) noexcept;
 
     Register_pair af;
     Register_pair bc;
