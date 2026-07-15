@@ -20,7 +20,7 @@ CPU::CPU(MMU &mmu) noexcept :
 
 void CPU::execute_instructions() noexcept {
     
-    uint8_t opcode = mmu.read(pc);
+    const uint8_t opcode = mmu.read(pc);
     uint8_t cycle = cpu_clock_cycles[opcode];
     
 
@@ -74,6 +74,9 @@ void CPU::execute_instructions() noexcept {
         case 0x1c:
             inc(de.bytes.low);
             break;
+        case 0x1f:
+            rrca();
+            break;
         case 0x20:
             jr_cc(!get_flag(Flag::zero));
             break;
@@ -88,6 +91,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x24:
             inc(hl.bytes.high);
+            break;
+        case 0x25:
+            dec(hl.bytes.high);
             break;
         case 0x26:
             ld(hl.bytes.high, mmu.read(pc + 1));
@@ -104,6 +110,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x2d:
             dec(hl.bytes.low);
+            break;
+        case 0x30:
+            jr_cc(!get_flag(Flag::carry));
             break;
         case 0x31:
             ld(sp);
@@ -123,14 +132,32 @@ void CPU::execute_instructions() noexcept {
         case 0x4e:
             ld(bc.bytes.low, mmu.read(hl.word));
             break;
+        case 0x4f:
+            ld(bc.bytes.low, af.bytes.high);
+            break;
         case 0x56:
             ld(de.bytes.high, mmu.read(hl.word));
+            break;
+        case 0x57:
+            ld(de.bytes.high, af.bytes.high);
+            break;
+        case 0x5f:
+            ld(de.bytes.low, af.bytes.high);
             break;
         case 0x77:
             ld(hl.word, af.bytes.high);
             break;
         case 0x78:
             ld(af.bytes.high, bc.bytes.high);
+            break;
+        case 0x79:
+            ld(af.bytes.high, bc.bytes.low);
+            break;
+        case 0x7a:  
+            ld(af.bytes.high, de.bytes.high);
+            break;
+        case 0x7b:
+            ld(af.bytes.high, de.bytes.low);
             break;
         case 0x7c:
             ld(af.bytes.high, hl.bytes.high);
@@ -205,6 +232,10 @@ void CPU::execute_instructions() noexcept {
             pc += 2;
             break;
         }
+        case 0xee:
+            bitwise_xor(mmu.read(pc + 1));
+            pc++;
+            break;
         case 0xf0:
             ldh_read(mmu.read(pc + 1));
             pc += 2;
@@ -242,33 +273,25 @@ void CPU::execute_instructions() noexcept {
 }
 
 void CPU::execute_cb_instructions() noexcept {
-}
+    uint8_t opcode = mmu.read(pc + 1);
 
+    switch (opcode)
+    {
+        case 0x19:
+            rr(bc.bytes.low);
+            break;
+        case 0x1a:
+            rr(de.bytes.high);
+            break;
+        case 0x38:
+            srl(bc.bytes.high);
+            break;
+        default:
+            std::cout << "DEFAULT CB CASE RAN : 0x" << std::hex << (int)opcode << std::endl;
+            exit(-1);
+    }
 
-void CPU::set_flag(Flag flag) noexcept { af.bytes.low |= static_cast<uint8_t>(flag); }
-void CPU::reset_flag(Flag flag) noexcept { af.bytes.low &= ~static_cast<uint8_t>(flag); }
-bool CPU::get_flag(Flag flag) const noexcept { return (af.bytes.low & static_cast<uint8_t>(flag)) != 0; }
-
-void CPU::print_debug() noexcept {
-    std::cout  
-          << "PC: 0x" << std::setfill('0') << std::setw(4) << std::hex << pc 
-          << " | SP: 0x" << std::setfill('0') << std::setw(4) << sp 
-          << " | Opcode: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(mmu.read(pc))
-          << " | A: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(af.bytes.high) 
-          << " | BC: 0x" << std::setfill('0') << std::setw(4) << bc.word
-          << " | DE: 0x" << std::setfill('0') << std::setw(4) << de.word
-          << " | HL: 0x" << std::setfill('0') << std::setw(4) << hl.word
-          << " | Cycles: " << std::dec << total_cycle
-          << " - Flags: ["
-          << ((get_flag(Flag::zero))        ? 'Z' : '-')
-          << ((get_flag(Flag::subtraction)) ? 'N' : '-')
-          << ((get_flag(Flag::half_carry))  ? 'H' : '-')
-          << ((get_flag(Flag::carry))       ? 'C' : '-')
-          << "]" << std::endl; 
-}
-
-void CPU::update_clock_cycles(uint8_t cycle) noexcept {
-    total_cycle += cycle;
+    pc += 2;
 }
 
 void CPU::add(uint8_t value) noexcept {
@@ -283,14 +306,37 @@ void CPU::add(uint8_t value) noexcept {
     pc++;
 }
 
-void CPU::call_cc(bool condition) noexcept {
-    if (condition)
-    {
-        call();
-        update_clock_cycles(12);
-        return;
-    }
-    pc += 3;
+void CPU::bitwise_or(uint8_t value) noexcept {
+    af.bytes.high |= value;
+
+    af.bytes.high ? reset_flag(Flag::zero) : set_flag(Flag::zero);
+    reset_flag(Flag::carry);
+    reset_flag(Flag::half_carry);
+    reset_flag(Flag::subtraction);
+
+    pc++;
+}
+
+void CPU::bitwise_and(uint8_t value) noexcept {
+    af.bytes.high &= value;
+
+    af.bytes.high == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    set_flag(Flag::half_carry); 
+    reset_flag(Flag::carry);
+        
+    pc++;
+}
+
+void CPU::bitwise_xor(uint8_t value) noexcept {
+    af.bytes.high ^= value;
+
+    af.bytes.high == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    reset_flag(Flag::half_carry); 
+    reset_flag(Flag::carry);
+        
+    pc++;
 }
 
 void CPU::call() noexcept {
@@ -301,6 +347,16 @@ void CPU::call() noexcept {
     push(pc + 3);
 
     pc = jump_address;
+}
+
+void CPU::call_cc(bool condition) noexcept {
+    if (condition)
+    {
+        call();
+        update_clock_cycles(12);
+        return;
+    }
+    pc += 3;
 }
 
 void CPU::cp(uint8_t value) noexcept {
@@ -314,37 +370,29 @@ void CPU::cp(uint8_t value) noexcept {
     pc++;
 }
 
-void CPU::ret() noexcept {
-    pc = pop();
+void CPU::inc(uint8_t &reg8) noexcept {
+    uint8_t old_value = reg8;
+    reg8++;
+    pc++;
+
+    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    (old_value & 0x0f) == 0x0f ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
 }
 
-void CPU::ret_cc(bool condition) noexcept {
-    if (condition)
-    {
-        ret();
-        update_clock_cycles(12);
-        return;
-    }
+void CPU::inc(uint16_t &reg16) noexcept {
+    reg16++;
     pc++;
 }
 
-void CPU::push(const uint16_t address) noexcept {
-    mmu.write(sp - 1, (address >> 8) & 0xFF);
-    mmu.write(sp - 2, address & 0xFF);
-    sp -= 2;
-    pc++;
-}
-
-uint16_t CPU::pop() noexcept {
-
-    uint8_t low = mmu.read(sp);
-    uint8_t high = mmu.read(sp + 1);
-    uint16_t popped_address = (high << 8) | low;
-
-    sp += 2;
+void CPU::dec(uint8_t &reg8) noexcept {
+    uint8_t old_value = reg8;
+    reg8--;
     pc++;
 
-    return popped_address;
+    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    set_flag(Flag::subtraction);
+    (old_value & 0x0f) == 0x0 ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
 }
 
 void CPU::jp() noexcept {
@@ -404,62 +452,48 @@ void CPU::ldh_write(uint8_t offset) noexcept {
     mmu.write(0xff00 + offset, af.bytes.high);
 }
 
-void CPU::inc(uint8_t &reg8) noexcept {
-    uint8_t old_value = reg8;
-    reg8++;
+void CPU::push(const uint16_t address) noexcept {
+    mmu.write(sp - 1, (address >> 8) & 0xFF);
+    mmu.write(sp - 2, address & 0xFF);
+    sp -= 2;
+    pc++;
+}
+
+uint16_t CPU::pop() noexcept {
+
+    uint8_t low = mmu.read(sp);
+    uint8_t high = mmu.read(sp + 1);
+    uint16_t popped_address = (high << 8) | low;
+
+    sp += 2;
     pc++;
 
-    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    return popped_address;
+}
+
+void CPU::ret() noexcept {
+    pc = pop();
+}
+
+void CPU::ret_cc(bool condition) noexcept {
+    if (condition)
+    {
+        ret();
+        update_clock_cycles(12);
+        return;
+    }
+    pc++;
+}
+
+void CPU::rrca() noexcept {
+    uint8_t lsb = af.bytes.high & 0x01;
+    af.bytes.high = (af.bytes.high >> 1) | (lsb << 7);
+
+    reset_flag(Flag::zero);
     reset_flag(Flag::subtraction);
-    (old_value & 0x0f) == 0x0f ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
-}
-
-void CPU::inc(uint16_t &reg16) noexcept {
-    reg16++;
-    pc++;
-}
-
-
-void CPU::dec(uint8_t &reg8) noexcept {
-    uint8_t old_value = reg8;
-    reg8--;
-    pc++;
-
-    reg8 == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
-    set_flag(Flag::subtraction);
-    (old_value & 0x0f) == 0x0 ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
-}
-
-void CPU::bitwise_or(uint8_t value) noexcept {
-    af.bytes.high |= value;
-
-    af.bytes.high ? reset_flag(Flag::zero) : set_flag(Flag::zero);
-    reset_flag(Flag::carry);
     reset_flag(Flag::half_carry);
-    reset_flag(Flag::subtraction);
+    lsb ? set_flag(Flag::carry) : reset_flag(Flag::carry);
 
-    pc++;
-}
-
-void CPU::bitwise_and(uint8_t value) noexcept {
-    af.bytes.high &= value;
-
-    af.bytes.high == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
-    reset_flag(Flag::subtraction);
-    set_flag(Flag::half_carry); 
-    reset_flag(Flag::carry);
-        
-    pc++;
-}
-
-void CPU::bitwise_xor(uint8_t value) noexcept {
-    af.bytes.high ^= value;
-
-    af.bytes.high == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
-    reset_flag(Flag::subtraction);
-    reset_flag(Flag::half_carry); 
-    reset_flag(Flag::carry);
-        
     pc++;
 }
 
@@ -473,4 +507,53 @@ void CPU::sub(uint8_t value) noexcept {
     old_a < value ? set_flag(Flag::carry) : reset_flag(Flag::carry);
 
     pc++;
+}
+
+void CPU::rr(uint8_t &value) noexcept {
+    uint8_t old_carry = get_flag(Flag::carry) ? 1 : 0;
+
+    (value & 0x01) ? set_flag(Flag::carry) : reset_flag(Flag::carry);
+
+    value = (value >> 1);
+    value |= (old_carry << 7);
+
+    value == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    reset_flag(Flag::half_carry);
+}
+
+void CPU::srl(uint8_t &value) noexcept {
+    (value & 0x01) ? set_flag(Flag::carry) : reset_flag(Flag::carry);
+
+    value = (value >> 1);
+    
+    value == 0 ? set_flag(Flag::zero) : reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    reset_flag(Flag::half_carry);
+}
+
+void CPU::set_flag(Flag flag) noexcept { af.bytes.low |= static_cast<uint8_t>(flag); }
+void CPU::reset_flag(Flag flag) noexcept { af.bytes.low &= ~static_cast<uint8_t>(flag); }
+bool CPU::get_flag(Flag flag) const noexcept { return (af.bytes.low & static_cast<uint8_t>(flag)) != 0; }
+
+void CPU::update_clock_cycles(uint8_t cycle) noexcept {
+    total_cycle += cycle;
+}
+
+void CPU::print_debug() noexcept {
+    std::cout  
+          << "PC: 0x" << std::setfill('0') << std::setw(4) << std::hex << pc 
+          << " | SP: 0x" << std::setfill('0') << std::setw(4) << sp 
+          << " | Opcode: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(mmu.read(pc))
+          << " | A: 0x" << std::setfill('0') << std::setw(2) << static_cast<int>(af.bytes.high) 
+          << " | BC: 0x" << std::setfill('0') << std::setw(4) << bc.word
+          << " | DE: 0x" << std::setfill('0') << std::setw(4) << de.word
+          << " | HL: 0x" << std::setfill('0') << std::setw(4) << hl.word
+          << " | Cycles: " << std::dec << total_cycle
+          << " - Flags: ["
+          << ((get_flag(Flag::zero))        ? 'Z' : '-')
+          << ((get_flag(Flag::subtraction)) ? 'N' : '-')
+          << ((get_flag(Flag::half_carry))  ? 'H' : '-')
+          << ((get_flag(Flag::carry))       ? 'C' : '-')
+          << "]" << std::endl; 
 }

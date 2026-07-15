@@ -74,8 +74,14 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
-
+    void rrca() noexcept;
+    
     void sub(uint8_t value) noexcept;
+
+    // Extended Instructions
+    void rr(uint8_t &value) noexcept;
+
+    void srl(uint8_t &value) noexcept;
 
     Register_pair af;
     Register_pair bc;
