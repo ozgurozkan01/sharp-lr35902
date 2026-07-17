@@ -79,7 +79,7 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
-    void rrca() noexcept;
+    void rra() noexcept;
     
     void scf() noexcept;
     void sub(uint8_t value) noexcept;
@@ -88,6 +88,7 @@ private:
     void rr(uint8_t &value) noexcept;
 
     void srl(uint8_t &value) noexcept;
+    void swap(uint8_t &reg8) noexcept;
 
     Register_pair af;
     Register_pair bc;
