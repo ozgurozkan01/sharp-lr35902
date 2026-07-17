@@ -50,6 +50,24 @@ void CPU::execute_instructions() noexcept {
         case 0x06:
             ld(bc.bytes.high);
             break;
+        case 0x07:
+            rlca();
+            break;
+        case 0x08:
+        {
+            uint8_t low = mmu.read(pc + 1);
+            uint8_t high = mmu.read(pc + 2);
+            uint16_t address = (high << 8) | low;
+        
+            uint8_t sp_low = sp & 0xFF;
+            uint8_t sp_high = sp >> 8;
+
+            ld(address, sp_low);
+            ld(address + 1, sp_high);
+            
+            pc++;
+            break;
+        }
         case 0x0c:
             inc(bc.bytes.low);
             break;
@@ -59,8 +77,8 @@ void CPU::execute_instructions() noexcept {
         case 0x0e:
             ld(bc.bytes.low);
             break;
-        case 0x18:
-            jr();
+        case 0x10:
+            pc += 2; // STOP
             break;
         case 0x11:
             ld(de.word);
@@ -73,6 +91,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x14:
             inc(de.bytes.high);
+            break;
+        case 0x18:
+            jr();
             break;
         case 0x1a:
             ld(af.bytes.high, mmu.read(de.word));
@@ -126,6 +147,9 @@ void CPU::execute_instructions() noexcept {
         case 0x2d:
             dec(hl.bytes.low);
             break;
+        case 0x2e:
+            ld(hl.bytes.low);
+            break;
         case 0x2f:
             cpl();
             break;
@@ -137,6 +161,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x32:
             ld(hl.word--, af.bytes.high);
+            break;
+        case 0x33:
+            inc(sp);
             break;
         case 0x35: 
         {
@@ -153,6 +180,12 @@ void CPU::execute_instructions() noexcept {
         case 0x38:
             jr_cc(get_flag(Flag::carry));
             break;
+        case 0x39:
+            add(sp);
+            break;
+        case 0x3b:
+            dec(sp);
+            break;
         case 0x3c:
             inc(af.bytes.high);
             break;
@@ -168,6 +201,9 @@ void CPU::execute_instructions() noexcept {
         case 0x47:
             ld(bc.bytes.high, af.bytes.high);
             break;
+        case 0x48:
+            ld(bc.bytes.low, bc.bytes.high);
+            break;
         case 0x4e:
             ld(bc.bytes.low, mmu.read(hl.word));
             break;
@@ -180,11 +216,26 @@ void CPU::execute_instructions() noexcept {
         case 0x57:
             ld(de.bytes.high, af.bytes.high);
             break;
+        case 0x5d:
+            ld(de.bytes.low, hl.bytes.low);
+            break;
+        case 0x5e:
+            ld(de.bytes.low, mmu.read(hl.word));
+            break;
         case 0x5f:
             ld(de.bytes.low, af.bytes.high);
             break;
+        case 0x62:
+            ld(hl.bytes.high, de.bytes.high);
+            break;
+        case 0x66:
+            ld(hl.bytes.high, mmu.read(hl.word));
+            break;
         case 0x67:
             ld(hl.bytes.high, af.bytes.high);
+            break;
+        case 0x6b:
+            ld(hl.bytes.low, de.bytes.low);
             break;
         case 0x6e:
             ld(hl.bytes.low, mmu.read(hl.word));
@@ -200,6 +251,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x72:
             ld(hl.word, de.bytes.high);
+            break;
+        case 0x73:
+            ld(hl.word, de.bytes.low);
             break;
         case 0x77:
             ld(hl.word, af.bytes.high);
@@ -228,8 +282,17 @@ void CPU::execute_instructions() noexcept {
         case 0xa9:
             bitwise_xor(bc.bytes.low);
             break;
+        case 0xad:
+            bitwise_xor(hl.bytes.low);
+            break;
         case 0xae:
             bitwise_xor(mmu.read(hl.word));
+            break;
+        case 0xaf:
+            bitwise_xor(af.bytes.high);
+            break;
+        case 0xb0:
+            bitwise_or(bc.bytes.high);
             break;
         case 0xb1:
             bitwise_or(bc.bytes.low);
@@ -303,6 +366,9 @@ void CPU::execute_instructions() noexcept {
         case 0xd8:
             ret_cc(get_flag(Flag::carry));
             break;
+        case 0xdf:
+            rst(4);
+            break;
         case 0xe0:
             ldh_write(mmu.read(pc + 1));
             pc += 2;
@@ -317,6 +383,24 @@ void CPU::execute_instructions() noexcept {
             bitwise_and(mmu.read(pc + 1));
             pc++;
             break;
+        case 0xe8:
+        {
+            uint8_t unsigned_data = mmu.read(pc + 1);
+            int8_t signed_data = static_cast<int8_t>(unsigned_data);
+
+            uint8_t low_sp = sp & 0xFF;
+
+            ((low_sp & 0x0F) + (unsigned_data & 0x0F) > 0x0F) ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry); 
+            (low_sp + unsigned_data > 0xFF) ? set_flag(Flag::carry) : reset_flag(Flag::carry);
+
+            sp += signed_data;
+
+            reset_flag(Flag::zero);
+            reset_flag(Flag::subtraction);
+
+            pc += 2;
+            break;
+        }
         case 0xe9:
             pc = hl.word;
             break;
@@ -347,6 +431,28 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xf5:
             push(af.word);
+            break;
+        case 0xf8:
+        {
+            uint8_t unsigned_data = mmu.read(pc + 1);
+            int8_t signed_data = static_cast<int8_t>(unsigned_data);
+
+            uint8_t low_sp = sp & 0xFF;
+
+            ((low_sp & 0x0F) + (unsigned_data & 0x0F) > 0x0F) ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry); 
+            (low_sp + unsigned_data > 0xFF) ? set_flag(Flag::carry) : reset_flag(Flag::carry);
+
+            hl.word = sp + signed_data;
+
+            reset_flag(Flag::zero);
+            reset_flag(Flag::subtraction);
+
+            pc += 2;
+            break;
+        }
+        case 0xf9:
+            sp = hl.word;
+            pc++;
             break;
         case 0xfa:
         {
@@ -379,6 +485,9 @@ void CPU::execute_cb_instructions() noexcept {
             break;
         case 0x1a:
             rr(de.bytes.high);
+            break;
+        case 0x1b:
+            rr(de.bytes.low);
             break;
         case 0x37:
             swap(af.bytes.high);
@@ -554,6 +663,11 @@ void CPU::dec(uint8_t &reg8) noexcept {
     (old_value & 0x0f) == 0x0 ? set_flag(Flag::half_carry) : reset_flag(Flag::half_carry);
 }
 
+void CPU::dec(uint16_t &reg16) noexcept {
+    reg16--;
+    pc++;
+}
+
 void CPU::jp() noexcept {
     uint8_t low = mmu.read(pc + 1);
     uint8_t high = mmu.read(pc + 2);
@@ -656,6 +770,20 @@ void CPU::ret_cc(bool condition) noexcept {
     pc++;
 }
 
+void CPU::rlca() noexcept {
+    uint8_t old_a = af.bytes.high;
+    uint8_t msb = (old_a & 0x80) >> 7; // 0000-0001
+    
+    af.bytes.high = (af.bytes.high << 1) | msb;
+
+    msb ? set_flag(Flag::carry) : reset_flag(Flag::carry);
+    reset_flag(Flag::zero);
+    reset_flag(Flag::subtraction);
+    reset_flag(Flag::half_carry);
+
+    pc++;
+}
+
 void CPU::rra() noexcept {
     uint8_t lsb = af.bytes.high & 0x01;
     uint8_t old_carry = get_flag(Flag::carry) ? 1 : 0;
@@ -668,6 +796,11 @@ void CPU::rra() noexcept {
     lsb ? set_flag(Flag::carry) : reset_flag(Flag::carry);
 
     pc++;
+}
+
+void CPU::rst(uint8_t vector) noexcept {
+    push(pc + 1);
+    pc = vector * 8;
 }
 
 void CPU::scf() noexcept {

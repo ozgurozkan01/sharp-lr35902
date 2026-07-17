@@ -59,7 +59,7 @@ private:
 
     void daa() noexcept;
     void dec(uint8_t &reg8) noexcept;
-    // void dec(uint16_t &reg16) noexcept;
+    void dec(uint16_t &reg16) noexcept;
 
     void jp() noexcept;
     void jp_cc(bool condition) noexcept;
@@ -79,7 +79,9 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
+    void rlca() noexcept;
     void rra() noexcept;
+    void rst(uint8_t vector) noexcept;
     
     void scf() noexcept;
     void sub(uint8_t value) noexcept;
