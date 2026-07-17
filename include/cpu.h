@@ -41,7 +41,9 @@ private:
     void reset_flag(Flag flag) noexcept;
     [[nodiscard]] bool get_flag(Flag flag) const noexcept;
 
+    void adc(uint8_t value) noexcept;
     void add(uint8_t value) noexcept;
+    void add(uint16_t value) noexcept;
 
     void bitwise_and(uint8_t value) noexcept;
     void bitwise_or(uint8_t value) noexcept; 
@@ -50,14 +52,17 @@ private:
     void call() noexcept;
     void call_cc(bool condition) noexcept;
     void cp(uint8_t value) noexcept;
+    void cpl() noexcept;
 
     void inc(uint8_t &reg8) noexcept;
     void inc(uint16_t &reg16) noexcept;
 
+    void daa() noexcept;
     void dec(uint8_t &reg8) noexcept;
     // void dec(uint16_t &reg16) noexcept;
 
     void jp() noexcept;
+    void jp_cc(bool condition) noexcept;
     void jr() noexcept;
     void jr_cc(bool condition) noexcept;
 
@@ -76,6 +81,7 @@ private:
     void ret_cc(bool condition) noexcept;
     void rrca() noexcept;
     
+    void scf() noexcept;
     void sub(uint8_t value) noexcept;
 
     // Extended Instructions
