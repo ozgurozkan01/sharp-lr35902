@@ -1000,7 +1000,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x43: bit_test(0, de.bytes.low); break;
         case 0x44: bit_test(0, hl.bytes.high); break;
         case 0x45: bit_test(0, hl.bytes.low); break;
-        // case 0x46
+        case 0x46: bit_test(0, mmu.read(hl.word)); break;
         case 0x47: bit_test(0, af.bytes.high); break;
 
         case 0x48: bit_test(1, bc.bytes.high); break;
@@ -1009,7 +1009,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x4b: bit_test(1, de.bytes.low); break;
         case 0x4c: bit_test(1, hl.bytes.high); break;
         case 0x4d: bit_test(1, hl.bytes.low); break;
-        // case 0x4e
+        case 0x4e: bit_test(1, mmu.read(hl.word)); break;
         case 0x4f: bit_test(1, af.bytes.high); break;
 
         case 0x50: bit_test(2, bc.bytes.high); break;
@@ -1018,7 +1018,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x53: bit_test(2, de.bytes.low); break;
         case 0x54: bit_test(2, hl.bytes.high); break;
         case 0x55: bit_test(2, hl.bytes.low); break;
-        // case 0x56
+        case 0x56: bit_test(2, mmu.read(hl.word)); break;
         case 0x57: bit_test(2, af.bytes.high); break;
 
         case 0x58: bit_test(3, bc.bytes.high); break;
@@ -1027,7 +1027,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x5b: bit_test(3, de.bytes.low); break;
         case 0x5c: bit_test(3, hl.bytes.high); break;
         case 0x5d: bit_test(3, hl.bytes.low); break;
-        // case 0x5e
+        case 0x5e: bit_test(3, mmu.read(hl.word)); break;
         case 0x5f: bit_test(3, af.bytes.high); break;
 
         case 0x60: bit_test(4, bc.bytes.high); break;
@@ -1036,7 +1036,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x63: bit_test(4, de.bytes.low); break;
         case 0x64: bit_test(4, hl.bytes.high); break;
         case 0x65: bit_test(4, hl.bytes.low); break;
-        // case 0x66
+        case 0x66: bit_test(4, mmu.read(hl.word)); break;
         case 0x67: bit_test(4, af.bytes.high); break;
 
         case 0x68: bit_test(5, bc.bytes.high); break;
@@ -1045,7 +1045,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x6b: bit_test(5, de.bytes.low); break;
         case 0x6c: bit_test(5, hl.bytes.high); break;
         case 0x6d: bit_test(5, hl.bytes.low); break;
-        // case 0x6e
+        case 0x6e: bit_test(5, mmu.read(hl.word)); break;
         case 0x6f: bit_test(5, af.bytes.high); break;
 
         case 0x70: bit_test(6, bc.bytes.high); break;
@@ -1054,7 +1054,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x73: bit_test(6, de.bytes.low); break;
         case 0x74: bit_test(6, hl.bytes.high); break;
         case 0x75: bit_test(6, hl.bytes.low); break;
-        // case 0x76
+        case 0x76: bit_test(6, mmu.read(hl.word)); break;
         case 0x77: bit_test(6, af.bytes.high); break;
 
         case 0x78: bit_test(7, bc.bytes.high); break;
@@ -1063,7 +1063,7 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x7b: bit_test(7, de.bytes.low); break;
         case 0x7c: bit_test(7, hl.bytes.high); break;
         case 0x7d: bit_test(7, hl.bytes.low); break;
-        // case 0x7e
+        case 0x7e: bit_test(7, mmu.read(hl.word)); break;
         case 0x7f: bit_test(7, af.bytes.high); break;
 
         case 0x80: bit_reset(0, bc.bytes.high); break;
@@ -1072,7 +1072,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x83: bit_reset(0, de.bytes.low); break;
         case 0x84: bit_reset(0, hl.bytes.high); break;
         case 0x85: bit_reset(0, hl.bytes.low); break;
-        // case 0x86
+        case 0x86: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(0, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x87: bit_reset(0, af.bytes.high); break;
         
         case 0x88: bit_reset(1, bc.bytes.high); break;
@@ -1081,7 +1088,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x8b: bit_reset(1, de.bytes.low); break;
         case 0x8c: bit_reset(1, hl.bytes.high); break;
         case 0x8d: bit_reset(1, hl.bytes.low); break;
-        // case 0x8e
+        case 0x8e: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(1, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x8f: bit_reset(1, af.bytes.high); break;
 
         case 0x90: bit_reset(2, bc.bytes.high); break;
@@ -1090,7 +1104,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x93: bit_reset(2, de.bytes.low); break;
         case 0x94: bit_reset(2, hl.bytes.high); break;
         case 0x95: bit_reset(2, hl.bytes.low); break;
-        // case 0x96
+        case 0x96: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(2, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x97: bit_reset(2, af.bytes.high); break;
     
         case 0x98: bit_reset(3, bc.bytes.high); break;
@@ -1099,7 +1120,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x9b: bit_reset(3, de.bytes.low); break;
         case 0x9c: bit_reset(3, hl.bytes.high); break;
         case 0x9d: bit_reset(3, hl.bytes.low); break;
-        // case 0x9e
+        case 0x9e: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(3, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x9f: bit_reset(3, af.bytes.high); break;
 
         case 0xa0: bit_reset(4, bc.bytes.high); break;
@@ -1108,7 +1136,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xa3: bit_reset(4, de.bytes.low); break;
         case 0xa4: bit_reset(4, hl.bytes.high); break;
         case 0xa5: bit_reset(4, hl.bytes.low); break;
-        // case 0xa6
+        case 0xa6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(4, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xa7: bit_reset(4, af.bytes.high); break;
     
         case 0xa8: bit_reset(5, bc.bytes.high); break;
@@ -1117,7 +1152,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xab: bit_reset(5, de.bytes.low); break;
         case 0xac: bit_reset(5, hl.bytes.high); break;
         case 0xad: bit_reset(5, hl.bytes.low); break;
-        // case 0x9e
+        case 0xae: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(5, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xaf: bit_reset(5, af.bytes.high); break;
 
         case 0xb0: bit_reset(6, bc.bytes.high); break;
@@ -1126,7 +1168,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xb3: bit_reset(6, de.bytes.low); break;
         case 0xb4: bit_reset(6, hl.bytes.high); break;
         case 0xb5: bit_reset(6, hl.bytes.low); break;
-        // case 0xb6
+        case 0xb6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(6, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xb7: bit_reset(6, af.bytes.high); break;
     
         case 0xb8: bit_reset(7, bc.bytes.high); break;
@@ -1135,7 +1184,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xbb: bit_reset(7, de.bytes.low); break;
         case 0xbc: bit_reset(7, hl.bytes.high); break;
         case 0xbd: bit_reset(7, hl.bytes.low); break;
-        // case 0xbe
+        case 0xbe: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_reset(7, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xbf: bit_reset(7, af.bytes.high); break;
 
         case 0xc0: bit_set(0, bc.bytes.high); break;
@@ -1144,7 +1200,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xc3: bit_set(0, de.bytes.low); break;
         case 0xc4: bit_set(0, hl.bytes.high); break;
         case 0xc5: bit_set(0, hl.bytes.low); break;
-        // case 0xc6
+        case 0xc6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(0, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xc7: bit_set(0, af.bytes.high); break;
 
         case 0xc8: bit_set(1, bc.bytes.high); break;
@@ -1153,7 +1216,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xcb: bit_set(1, de.bytes.low); break;
         case 0xcc: bit_set(1, hl.bytes.high); break;
         case 0xcd: bit_set(1, hl.bytes.low); break;
-        // case 0xce
+        case 0xce: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(1, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xcf: bit_set(1, af.bytes.high); break;
 
         case 0xd0: bit_set(2, bc.bytes.high); break;
@@ -1162,7 +1232,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xd3: bit_set(2, de.bytes.low); break;
         case 0xd4: bit_set(2, hl.bytes.high); break;
         case 0xd5: bit_set(2, hl.bytes.low); break;
-        // case 0xd6
+        case 0xd6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(2, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0xd7: bit_set(2, af.bytes.high); break;
 
         case 0xd8: bit_set(3, bc.bytes.high); break;
@@ -1171,7 +1248,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xdb: bit_set(3, de.bytes.low); break;
         case 0xdc: bit_set(3, hl.bytes.high); break;
         case 0xdd: bit_set(3, hl.bytes.low); break;
-        // case 0xde
+        case 0xde: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(3, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }        
         case 0xdf: bit_set(3, af.bytes.high); break;
 
         case 0xe0: bit_set(4, bc.bytes.high); break;
@@ -1180,7 +1264,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xe3: bit_set(4, de.bytes.low); break;
         case 0xe4: bit_set(4, hl.bytes.high); break;
         case 0xe5: bit_set(4, hl.bytes.low); break;
-        // case 0xe6
+        case 0xe6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(4, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }        
         case 0xe7: bit_set(4, af.bytes.high); break;
 
         case 0xe8: bit_set(5, bc.bytes.high); break;
@@ -1189,7 +1280,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xeb: bit_set(5, de.bytes.low); break;
         case 0xec: bit_set(5, hl.bytes.high); break;
         case 0xed: bit_set(5, hl.bytes.low); break;
-        // case 0xee
+        case 0xee: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(5, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }        
         case 0xef: bit_set(5, af.bytes.high); break;
 
         case 0xf0: bit_set(6, bc.bytes.high); break;
@@ -1198,7 +1296,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xf3: bit_set(6, de.bytes.low); break;
         case 0xf4: bit_set(6, hl.bytes.high); break;
         case 0xf5: bit_set(6, hl.bytes.low); break;
-        // case 0xf6
+        case 0xf6: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(6, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }        
         case 0xf7: bit_set(6, af.bytes.high); break;
 
         case 0xf8: bit_set(7, bc.bytes.high); break;
@@ -1207,7 +1312,14 @@ void CPU::execute_cb_instructions() noexcept {
         case 0xfb: bit_set(7, de.bytes.low); break;
         case 0xfc: bit_set(7, hl.bytes.high); break;
         case 0xfd: bit_set(7, hl.bytes.low); break;
-        // case 0xfe
+        case 0xfe: {
+            uint8_t data = mmu.read(hl.word);
+            
+            bit_set(7, data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }        
         case 0xff: bit_set(7, af.bytes.high); break;
 
         default:
