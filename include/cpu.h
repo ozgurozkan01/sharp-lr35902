@@ -91,6 +91,10 @@ private:
     void sub(uint8_t value) noexcept;
 
     // Extended Instructions
+    void bit_test(uint8_t u3, uint8_t reg8) noexcept;
+    void bit_reset(uint8_t u3, uint8_t &reg8) noexcept;
+    void bit_set(uint8_t u3, uint8_t &reg8) noexcept;
+
     void rl(uint8_t &reg8) noexcept;
     void rlc(uint8_t &reg8) noexcept;
     void rr(uint8_t &reg8) noexcept;
