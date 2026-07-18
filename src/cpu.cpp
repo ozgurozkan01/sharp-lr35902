@@ -683,6 +683,10 @@ void CPU::execute_instructions() noexcept {
         case 0xdc:
             call_cc(get_flag(Flag::carry));
             break;
+        case 0xde:
+            sbc(mmu.read(pc + 1));
+            pc++;
+            break;
         case 0xdf:
             rst(4);
             break;
@@ -813,90 +817,37 @@ void CPU::execute_cb_instructions() noexcept {
 
     switch (opcode)
     {
-        case 0x00:
-            rlc(bc.bytes.high);
-            break;
-        case 0x01:
-            rlc(bc.bytes.low);
-            break;
-        case 0x02:
-            rlc(de.bytes.high);
-            break;
-        case 0x03:
-            rlc(de.bytes.low);
-            break;
-        case 0x04:
-            rlc(hl.bytes.high);
-            break;
-        case 0x05:
-            rlc(hl.bytes.low);
-            break;
-        case 0x07:
-            rlc(af.bytes.high);
-            break;
-        case 0x08: 
-            rrc(bc.bytes.high); 
-            break;
-        case 0x09: 
-            rrc(bc.bytes.low); 
-            break;
-        case 0x0a: 
-            rrc(de.bytes.high); 
-            break;
-        case 0x0b: 
-            rrc(de.bytes.low); 
-            break;
-        case 0x0c: 
-            rrc(hl.bytes.high); 
-            break;
-        case 0x0d: 
-            rrc(hl.bytes.low); 
-            break;
-        case 0x0f: 
-            rrc(af.bytes.high); 
-            break;
-        case 0x10:
-            rl(bc.bytes.high);
-            break;
-        case 0x11:
-            rl(bc.bytes.low);
-            break;
-        case 0x12: 
-            rl(de.bytes.high);
-            break;
-        case 0x13: 
-            rl(de.bytes.low);
-            break;
-        case 0x14: 
-            rl(hl.bytes.high);
-            break;
-        case 0x15: 
-            rl(hl.bytes.low);
-            break;
-        case 0x17: 
-            rl(af.bytes.high);
-            break;
-        case 0x18:
-            rr(bc.bytes.high);
-            break;
-        case 0x19:
-            rr(bc.bytes.low);
-            break;
-        case 0x1a:
-            rr(de.bytes.high);
-            break;
-        case 0x1b:
-            rr(de.bytes.low);
-            break;
-        case 0x1c:
-            rr(hl.bytes.high);
-            break;
-        case 0x1d:
-            rr(hl.bytes.low);
-            break;
-        case 0x1f:
-            rr(af.bytes.high);
-            break;
+        case 0x00: rlc(bc.bytes.high); break;
+        case 0x01: rlc(bc.bytes.low); break;
+        case 0x02: rlc(de.bytes.high); break;
+        case 0x03: rlc(de.bytes.low); break;
+        case 0x04: rlc(hl.bytes.high); break;
+        case 0x05: rlc(hl.bytes.low); break;
+        case 0x07: rlc(af.bytes.high); break;
+        
+        case 0x08: rrc(bc.bytes.high); break;
+        case 0x09: rrc(bc.bytes.low); break;
+        case 0x0a: rrc(de.bytes.high); break;
+        case 0x0b: rrc(de.bytes.low); break;
+        case 0x0c: rrc(hl.bytes.high); break;
+        case 0x0d: rrc(hl.bytes.low); break;
+        case 0x0f: rrc(af.bytes.high); break;
+        
+        case 0x10: rl(bc.bytes.high); break;
+        case 0x11: rl(bc.bytes.low); break;
+        case 0x12: rl(de.bytes.high); break;
+        case 0x13: rl(de.bytes.low); break;
+        case 0x14: rl(hl.bytes.high); break;
+        case 0x15: rl(hl.bytes.low); break;
+        case 0x17: rl(af.bytes.high); break;
+        
+        case 0x18: rr(bc.bytes.high); break;
+        case 0x19: rr(bc.bytes.low); break;
+        case 0x1a: rr(de.bytes.high); break;
+        case 0x1b: rr(de.bytes.low); break;
+        case 0x1c: rr(hl.bytes.high); break;
+        case 0x1d: rr(hl.bytes.low); break;
+        case 0x1f: rr(af.bytes.high); break;
             
         case 0x20: sla(bc.bytes.high); break;
         case 0x21: sla(bc.bytes.low); break;
