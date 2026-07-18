@@ -83,6 +83,7 @@ private:
     void rra() noexcept;
     void rst(uint8_t vector) noexcept;
     
+    void sbc(uint8_t value) noexcept;
     void scf() noexcept;
     void sub(uint8_t value) noexcept;
 

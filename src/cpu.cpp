@@ -68,6 +68,12 @@ void CPU::execute_instructions() noexcept {
             pc++;
             break;
         }
+        case 0x09:
+            add(bc.word);
+            break;
+        case 0x0b:
+            dec(bc.word);
+            break;
         case 0x0c:
             inc(bc.bytes.low);
             break;
@@ -92,17 +98,30 @@ void CPU::execute_instructions() noexcept {
         case 0x14:
             inc(de.bytes.high);
             break;
+        case 0x16:
+            ld(de.bytes.high, mmu.read(pc + 1));
+            pc++;
+            break;
         case 0x18:
             jr();
             break;
+        case 0x19:
+            add(de.word);
+            break;
         case 0x1a:
             ld(af.bytes.high, mmu.read(de.word));
+            break;
+        case 0x1b:
+            dec(de.word);
             break;
         case 0x1c:
             inc(de.bytes.low);
             break;
         case 0x1d:
             dec(de.bytes.low);
+            break;
+        case 0x1e:
+            ld(de.bytes.low);
             break;
         case 0x1f:
             rra();
@@ -141,6 +160,9 @@ void CPU::execute_instructions() noexcept {
         case 0x2a:
             ld(af.bytes.high, mmu.read(hl.word++));
             break;
+        case 0x2b:
+            dec(hl.word);
+            break;
         case 0x2c:
             inc(hl.bytes.low);
             break;
@@ -174,6 +196,10 @@ void CPU::execute_instructions() noexcept {
             mmu.write(hl.word, val);
             break;
         }
+        case 0x36:
+            ld(hl.word, mmu.read(pc + 1));
+            pc++;
+            break;
         case 0x37:
             scf();
             break;
@@ -431,6 +457,10 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xf5:
             push(af.word);
+            break;
+        case 0xf6:
+            bitwise_or(mmu.read(pc + 1));
+            pc++;
             break;
         case 0xf8:
         {
@@ -801,6 +831,10 @@ void CPU::rra() noexcept {
 void CPU::rst(uint8_t vector) noexcept {
     push(pc + 1);
     pc = vector * 8;
+}
+
+void CPU::sbc(uint8_t value) noexcept {
+    
 }
 
 void CPU::scf() noexcept {
