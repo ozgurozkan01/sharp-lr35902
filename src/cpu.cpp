@@ -446,6 +446,9 @@ void CPU::execute_instructions() noexcept {
         case 0xbb:
             cp(de.bytes.low);
             break;
+        case 0xc0:
+            ret_cc(!get_flag(Flag::zero));
+            break;
         case 0xc1:
             bc.word = pop();
             break;
@@ -465,14 +468,23 @@ void CPU::execute_instructions() noexcept {
             add(mmu.read(pc + 1));
             pc++;
             break;
+        case 0xc7:
+            rst(0);
+            break;
         case 0xc8:
             ret_cc(get_flag(Flag::zero));
             break;
         case 0xc9:
             ret();
             break;
+        case 0xca:
+            jp_cc(get_flag(Flag::zero));
+            break;
         case 0xcb:
             execute_cb_instructions();
+            break;
+        case 0xcc:
+            call_cc(get_flag(Flag::zero));
             break;
         case 0xcd:
             call();
@@ -481,11 +493,20 @@ void CPU::execute_instructions() noexcept {
             adc(mmu.read(pc + 1));
             pc++;
             break;
+        case 0xcf:
+            rst(1);
+            break;
         case 0xd0:
             ret_cc(!get_flag(Flag::carry));
             break;
         case 0xd1:
             de.word = pop();
+            break;
+        case 0xd2:
+            jp_cc(!get_flag(Flag::carry));
+            break;
+        case 0xd4:
+            call_cc(!get_flag(Flag::carry));
             break;
         case 0xd5:
             push(de.word);
@@ -494,8 +515,20 @@ void CPU::execute_instructions() noexcept {
             sub(mmu.read(pc + 1));
             pc++;
             break;
+        case 0xd7:
+            rst(2);
+            break;
         case 0xd8:
             ret_cc(get_flag(Flag::carry));
+            break;
+        case 0xd9:
+            ret(); // RETI actually
+            break;
+        case 0xda:
+            jp_cc(get_flag(Flag::carry));
+            break;
+        case 0xdc:
+            call_cc(get_flag(Flag::carry));
             break;
         case 0xdf:
             rst(4);
@@ -513,6 +546,9 @@ void CPU::execute_instructions() noexcept {
         case 0xe6:
             bitwise_and(mmu.read(pc + 1));
             pc++;
+            break;
+        case 0xe7:
+            rst(5);
             break;
         case 0xe8:
         {
@@ -548,6 +584,9 @@ void CPU::execute_instructions() noexcept {
             bitwise_xor(mmu.read(pc + 1));
             pc++;
             break;
+        case 0xef:
+            rst(5);
+            break;
         case 0xf0:
             ldh_read(mmu.read(pc + 1));
             pc += 2;
@@ -566,6 +605,9 @@ void CPU::execute_instructions() noexcept {
         case 0xf6:
             bitwise_or(mmu.read(pc + 1));
             pc++;
+            break;
+        case 0xf7:
+            rst(6);
             break;
         case 0xf8:
         {
@@ -603,6 +645,9 @@ void CPU::execute_instructions() noexcept {
         case 0xfe:
             cp(mmu.read(pc + 1));
             pc++;
+            break;
+        case 0xff:
+            rst(7);
             break;
         default:
             std::cout << "DEFAULT CASE RAN : 0x" << std::hex << (int)opcode << std::endl;
