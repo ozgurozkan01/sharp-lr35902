@@ -51,6 +51,7 @@ private:
 
     void call() noexcept;
     void call_cc(bool condition) noexcept;
+    void ccf() noexcept;
     void cp(uint8_t value) noexcept;
     void cpl() noexcept;
 
@@ -79,8 +80,10 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
+    void rla() noexcept;
     void rlca() noexcept;
     void rra() noexcept;
+    void rrca() noexcept;
     void rst(uint8_t vector) noexcept;
     
     void sbc(uint8_t value) noexcept;
@@ -88,8 +91,13 @@ private:
     void sub(uint8_t value) noexcept;
 
     // Extended Instructions
-    void rr(uint8_t &value) noexcept;
+    void rl(uint8_t &reg8) noexcept;
+    void rlc(uint8_t &reg8) noexcept;
+    void rr(uint8_t &reg8) noexcept;
+    void rrc(uint8_t &reg8) noexcept;
 
+    void sla(uint8_t &reg8) noexcept;
+    void sra(uint8_t &reg8) noexcept;
     void srl(uint8_t &value) noexcept;
     void swap(uint8_t &reg8) noexcept;
 
