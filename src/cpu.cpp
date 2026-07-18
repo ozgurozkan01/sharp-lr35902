@@ -221,6 +221,24 @@ void CPU::execute_instructions() noexcept {
         case 0x3e:
             ld(af.bytes.high);
             break;
+        case 0x40:
+            ld(bc.bytes.high, bc.bytes.high);
+            break;
+        case 0x41:
+            ld(bc.bytes.high, bc.bytes.low);
+            break;
+        case 0x42:
+            ld(bc.bytes.high, de.bytes.high);
+            break;
+        case 0x43:
+            ld(bc.bytes.high, de.bytes.low);
+            break;
+        case 0x44:
+            ld(bc.bytes.high, hl.bytes.high);
+            break;
+        case 0x45:
+            ld(bc.bytes.high, hl.bytes.low);
+            break;
         case 0x46:
             ld(bc.bytes.high, mmu.read(hl.word));
             break;
@@ -230,17 +248,65 @@ void CPU::execute_instructions() noexcept {
         case 0x48:
             ld(bc.bytes.low, bc.bytes.high);
             break;
+        case 0x49:
+            ld(bc.bytes.low, bc.bytes.low);
+            break;
+        case 0x4a:
+            ld(bc.bytes.low, de.bytes.high);
+            break;
+        case 0x4b:
+            ld(bc.bytes.low, de.bytes.low);
+            break;
+        case 0x4c:
+            ld(bc.bytes.low, hl.bytes.high);
+            break;
+        case 0x4d:
+            ld(bc.bytes.low, hl.bytes.low);
+            break;
         case 0x4e:
             ld(bc.bytes.low, mmu.read(hl.word));
             break;
         case 0x4f:
             ld(bc.bytes.low, af.bytes.high);
             break;
+        case 0x50:
+            ld(de.bytes.high, bc.bytes.high);
+            break;
+        case 0x51:
+            ld(de.bytes.high, bc.bytes.low);
+            break;
+        case 0x52:
+            ld(de.bytes.high, de.bytes.high);
+            break;
+        case 0x53:
+            ld(de.bytes.high, de.bytes.low);
+            break;
+        case 0x54:
+            ld(de.bytes.high, hl.bytes.high);
+            break;
+        case 0x55:
+            ld(de.bytes.high, hl.bytes.low);
+            break;
         case 0x56:
             ld(de.bytes.high, mmu.read(hl.word));
             break;
         case 0x57:
             ld(de.bytes.high, af.bytes.high);
+            break;
+        case 0x58:
+            ld(de.bytes.low, bc.bytes.high);
+            break;
+        case 0x59:
+            ld(de.bytes.low, bc.bytes.low);
+            break;
+        case 0x5a:
+            ld(de.bytes.low, de.bytes.high);
+            break;
+        case 0x5b:
+            ld(de.bytes.low, de.bytes.low);
+            break;
+        case 0x5c:
+            ld(de.bytes.low, hl.bytes.high);
             break;
         case 0x5d:
             ld(de.bytes.low, hl.bytes.low);
@@ -251,8 +317,23 @@ void CPU::execute_instructions() noexcept {
         case 0x5f:
             ld(de.bytes.low, af.bytes.high);
             break;
+        case 0x60:
+            ld(hl.bytes.high, bc.bytes.high);
+            break;
+        case 0x61:
+            ld(hl.bytes.high, bc.bytes.low);
+            break;
         case 0x62:
             ld(hl.bytes.high, de.bytes.high);
+            break;
+        case 0x63:
+            ld(hl.bytes.high, de.bytes.low);
+            break;
+        case 0x64:
+            ld(hl.bytes.high, hl.bytes.high);
+            break;
+        case 0x65:
+            ld(hl.bytes.high, hl.bytes.low);
             break;
         case 0x66:
             ld(hl.bytes.high, mmu.read(hl.word));
@@ -260,8 +341,23 @@ void CPU::execute_instructions() noexcept {
         case 0x67:
             ld(hl.bytes.high, af.bytes.high);
             break;
+        case 0x68:
+            ld(hl.bytes.low, bc.bytes.high);
+            break;
+        case 0x69:
+            ld(hl.bytes.low, bc.bytes.low);
+            break;
+        case 0x6a:
+            ld(hl.bytes.low, de.bytes.high);
+            break;
         case 0x6b:
             ld(hl.bytes.low, de.bytes.low);
+            break;
+        case 0x6c:
+            ld(hl.bytes.low, hl.bytes.high);
+            break;
+        case 0x6d:
+            ld(hl.bytes.low, hl.bytes.low);
             break;
         case 0x6e:
             ld(hl.bytes.low, mmu.read(hl.word));
@@ -280,6 +376,12 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x73:
             ld(hl.word, de.bytes.low);
+            break;
+        case 0x74:
+            ld(hl.word, hl.bytes.high);
+            break;
+        case 0x75:
+            ld(hl.word, hl.bytes.low);
             break;
         case 0x77:
             ld(hl.word, af.bytes.high);
@@ -304,6 +406,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x7e:
             ld(af.bytes.high, mmu.read(hl.word));
+            break;
+        case 0x7f:
+            ld(af.bytes.high, af.bytes.high);
             break;
         case 0xa9:
             bitwise_xor(bc.bytes.low);
