@@ -38,6 +38,9 @@ void CPU::execute_instructions() noexcept {
         case 0x01:
             ld(bc.word);
             break;
+        case 0x02:
+            ld(bc.word, af.bytes.high);
+            break;
         case 0x03:
             inc(bc.word);
             break;
@@ -199,6 +202,15 @@ void CPU::execute_instructions() noexcept {
         case 0x33:
             inc(sp);
             break;
+        case 0x34:
+        {
+            uint8_t val = mmu.read(hl.word);
+            
+            inc(val); 
+
+            mmu.write(hl.word, val);
+            break;
+        }        
         case 0x35: 
         {
             uint8_t val = mmu.read(hl.word);
@@ -220,6 +232,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x39:
             add(sp);
+            break;
+        case 0x3a:
+            ld(af.bytes.high, mmu.read(hl.word--));
             break;
         case 0x3b:
             dec(sp);
@@ -443,6 +458,9 @@ void CPU::execute_instructions() noexcept {
         case 0x85:
             add(hl.bytes.low);
             break;
+        case 0x86:
+            add(mmu.read(hl.word));
+            break;
         case 0x87:
             add(af.bytes.high);
             break;
@@ -463,6 +481,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0x8d:
             adc(hl.bytes.low);
+            break;
+        case 0x8e:
+            adc(mmu.read(hl.word));
             break;
         case 0x8f:
             adc(af.bytes.high);
@@ -485,6 +506,9 @@ void CPU::execute_instructions() noexcept {
         case 0x95:
             sub(hl.bytes.low);
             break;
+        case 0x96:
+            sub(mmu.read(hl.word));
+            break;
         case 0x97:
             sub(af.bytes.high);
             break;
@@ -506,6 +530,9 @@ void CPU::execute_instructions() noexcept {
         case 0x9d:
             sbc(hl.bytes.low);
             break;
+        case 0x9e:
+            sbc(mmu.read(hl.word));
+            break;
         case 0x9f:
             sbc(af.bytes.high);
             break;
@@ -526,6 +553,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xa5:
             bitwise_and(hl.bytes.low);
+            break;
+        case 0xa6:
+            bitwise_and(mmu.read(hl.word));
             break;
         case 0xa7:
             bitwise_and(af.bytes.high);
@@ -595,6 +625,9 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xbd:
             cp(hl.bytes.low);
+            break;
+        case 0xbe:
+            cp(mmu.read(hl.word));
             break;
         case 0xbf:
             cp(af.bytes.high);
@@ -697,6 +730,10 @@ void CPU::execute_instructions() noexcept {
         case 0xe1:
             hl.word = pop();
             break;
+        case 0xe2:
+        ldh_write(bc.bytes.low);
+            pc++;
+            break;
         case 0xe5:
             push(hl.word);
             break;
@@ -751,6 +788,10 @@ void CPU::execute_instructions() noexcept {
         case 0xf1:
             af.word = pop();
             af.bytes.low &= 0xF0;
+            break;
+        case 0xf2:
+            ldh_read(bc.bytes.low);
+            pc++;
             break;
         case 0xf3:
             is_interrupt_enabled = false;
@@ -823,6 +864,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x03: rlc(de.bytes.low); break;
         case 0x04: rlc(hl.bytes.high); break;
         case 0x05: rlc(hl.bytes.low); break;
+        case 0x06:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            rlc(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x07: rlc(af.bytes.high); break;
         
         case 0x08: rrc(bc.bytes.high); break;
@@ -831,6 +881,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x0b: rrc(de.bytes.low); break;
         case 0x0c: rrc(hl.bytes.high); break;
         case 0x0d: rrc(hl.bytes.low); break;
+        case 0x0e:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            rrc(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x0f: rrc(af.bytes.high); break;
         
         case 0x10: rl(bc.bytes.high); break;
@@ -839,6 +898,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x13: rl(de.bytes.low); break;
         case 0x14: rl(hl.bytes.high); break;
         case 0x15: rl(hl.bytes.low); break;
+        case 0x16:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            rl(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x17: rl(af.bytes.high); break;
         
         case 0x18: rr(bc.bytes.high); break;
@@ -847,6 +915,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x1b: rr(de.bytes.low); break;
         case 0x1c: rr(hl.bytes.high); break;
         case 0x1d: rr(hl.bytes.low); break;
+        case 0x1e:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            rr(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x1f: rr(af.bytes.high); break;
             
         case 0x20: sla(bc.bytes.high); break;
@@ -855,6 +932,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x23: sla(de.bytes.low); break;
         case 0x24: sla(hl.bytes.high); break;
         case 0x25: sla(hl.bytes.low); break;
+        case 0x26:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            sla(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x27: sla(af.bytes.high); break;
 
         case 0x28: sra(bc.bytes.high); break;
@@ -863,6 +949,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x2b: sra(de.bytes.low); break;
         case 0x2c: sra(hl.bytes.high); break;
         case 0x2d: sra(hl.bytes.low); break;
+        case 0x2e:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            sra(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x2f: sra(af.bytes.high); break;
 
         case 0x30: swap(bc.bytes.high); break;
@@ -871,6 +966,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x33: swap(de.bytes.low); break;
         case 0x34: swap(hl.bytes.high); break;
         case 0x35: swap(hl.bytes.low); break;
+        case 0x36:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            swap(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x37: swap(af.bytes.high); break;
 
         case 0x38: srl(bc.bytes.high); break;
@@ -879,6 +983,15 @@ void CPU::execute_cb_instructions() noexcept {
         case 0x3b: srl(de.bytes.low); break;
         case 0x3c: srl(hl.bytes.high); break;
         case 0x3d: srl(hl.bytes.low); break;
+        case 0x3e:
+        {
+            uint8_t data = mmu.read(hl.word);
+            
+            srl(data);
+            
+            mmu.write(hl.word, data);
+            break;
+        }
         case 0x3f: srl(af.bytes.high); break;
 
         default:
