@@ -695,7 +695,7 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xcb:
             execute_cb_instructions();
-            break;
+            return;
         case 0xcc:
             call_cc(get_flag(Flag::zero));
             break;
