@@ -1,12 +1,17 @@
 #include "../include/cpu.h"
+#include "../include/mmu.h"
+#include "../include/timer.h"
+#include "../include/interrupt_controller.h"
 #include <iomanip>
 
 #define DEBUG_MOD false
 
-CPU::CPU(MMU &mmu) noexcept :
-    mmu(mmu)
+CPU::CPU(MMU &mmu, InterruptController &interrupt_controller, Timer &timer) noexcept :
+    mmu(mmu),
+    timer(timer),
+    interrupt_controller(interrupt_controller)
 {
-    is_interrupt_enabled = true;
+    is_halted = false;
 
     af.word = 0x01B0;
     bc.word = 0x0013;
@@ -19,6 +24,26 @@ CPU::CPU(MMU &mmu) noexcept :
 }
 
 void CPU::execute_instructions() noexcept {
+    if (is_halted) {
+        timer.tick(4, mmu);
+        update_clock_cycles(4);
+
+        if (interrupt_controller.has_pending_interrupt()) {
+            is_halted = false;
+        }
+
+        return;
+    }
+
+    if (interrupt_controller.get_pending_ei()) {
+        interrupt_controller.reset_pending_ei();
+        interrupt_controller.set_ime();
+    }
+
+    if (interrupt_controller.get_ime() && interrupt_controller.has_pending_interrupt()) {
+        execute_interrupts();
+        return;
+    }
     
     const uint8_t opcode = mmu.read(pc);
     uint8_t cycle = cpu_clock_cycles[opcode];
@@ -28,11 +53,9 @@ void CPU::execute_instructions() noexcept {
     print_debug();
 #endif
 
-    update_clock_cycles(cycle);
-
     switch (opcode)
     {
-        case 0x0:
+        case 0x00:
             pc++;
             break;
         case 0x01:
@@ -413,6 +436,10 @@ void CPU::execute_instructions() noexcept {
         case 0x75:
             ld(hl.word, hl.bytes.low);
             break;
+        case 0x76:
+            is_halted = true;
+            pc++;
+            break;
         case 0x77:
             ld(hl.word, af.bytes.high);
             break;
@@ -708,7 +735,7 @@ void CPU::execute_instructions() noexcept {
             ret_cc(get_flag(Flag::carry));
             break;
         case 0xd9:
-            ret(); // RETI actually
+            reti();
             break;
         case 0xda:
             jp_cc(get_flag(Flag::carry));
@@ -794,7 +821,7 @@ void CPU::execute_instructions() noexcept {
             pc++;
             break;
         case 0xf3:
-            is_interrupt_enabled = false;
+            interrupt_controller.reset_ime();
             pc++;
             break;
         case 0xf5:
@@ -840,6 +867,10 @@ void CPU::execute_instructions() noexcept {
             pc += 2;
             break;
         }
+        case 0xfb:
+            interrupt_controller.set_ime();
+            pc++;
+            break;
         case 0xfe:
             cp(mmu.read(pc + 1));
             pc++;
@@ -851,10 +882,14 @@ void CPU::execute_instructions() noexcept {
             std::cout << "DEFAULT CASE RAN : 0x" << std::hex << (int)opcode << std::endl;
             exit(-1);
     }
+
+    timer.tick(cycle, mmu);
+    update_clock_cycles(cycle);
 }
 
 void CPU::execute_cb_instructions() noexcept {
     uint8_t opcode = mmu.read(pc + 1);
+    uint8_t cycle = cpu_cb_clock_cycles[opcode];
 
     switch (opcode)
     {
@@ -1327,7 +1362,26 @@ void CPU::execute_cb_instructions() noexcept {
             exit(-1);
     }
 
+    update_clock_cycles(cycle);
+    timer.tick(cycle, mmu);
     pc += 2;
+}
+
+void CPU::execute_interrupts() noexcept {
+    int interrupt_bit = interrupt_controller.acknowledge_interrupt();
+    
+    if (interrupt_bit == -1) {
+        return; 
+    }
+
+    interrupt_controller.reset_ime();
+
+    push(pc); 
+
+    pc = interrupt_controller.get_interrupt_vector(interrupt_bit);
+
+    timer.tick(20, mmu);
+    update_clock_cycles(20);
 }
 
 void CPU::adc(uint8_t value) noexcept {
@@ -1414,6 +1468,8 @@ void CPU::call_cc(bool condition) noexcept {
     {
         call();
         update_clock_cycles(12);
+        timer.tick(12, mmu);
+
         return;
     }
     pc += 3;
@@ -1514,6 +1570,7 @@ void CPU::jp_cc(bool condition) noexcept {
     {
         jp();
         update_clock_cycles(4);
+        timer.tick(4, mmu);
         return;
     }
 
@@ -1534,6 +1591,7 @@ void CPU::jr_cc(bool condition) noexcept {
     {
         jr();
         update_clock_cycles(4);
+        timer.tick(4, mmu);
         return;
     }
     
@@ -1600,9 +1658,15 @@ void CPU::ret_cc(bool condition) noexcept {
     {
         ret();
         update_clock_cycles(12);
+        timer.tick(12, mmu);
         return;
     }
     pc++;
+}
+
+void CPU::reti() noexcept {
+    ret();
+    interrupt_controller.set_ime();
 }
 
 void CPU::rla() noexcept {

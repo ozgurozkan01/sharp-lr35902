@@ -1,8 +1,6 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include "mmu.h"
-
 #include <iostream>
 #include <stdint.h>
 
@@ -15,16 +13,20 @@ typedef union {
         uint8_t high;
     } bytes;
 
-} Register_pair;
+} RegisterPair;
 
+class MMU;
+class Timer;
+class InterruptController;
 
 class CPU {
 public:
 
-    CPU(MMU &mmu) noexcept;
+    CPU(MMU &mmu, InterruptController &interrupt_controller, Timer &timer) noexcept;
 
     void execute_instructions() noexcept;
     void execute_cb_instructions() noexcept;
+    void execute_interrupts() noexcept;
 
     enum class Flag : uint8_t {
         carry       = 0x10,
@@ -80,6 +82,7 @@ private:
 
     void ret() noexcept;
     void ret_cc(bool condition) noexcept;
+    void reti() noexcept;
     void rla() noexcept;
     void rlca() noexcept;
     void rra() noexcept;
@@ -105,18 +108,20 @@ private:
     void srl(uint8_t &value) noexcept;
     void swap(uint8_t &reg8) noexcept;
 
-    Register_pair af;
-    Register_pair bc;
-    Register_pair de;   
-    Register_pair hl;
+    bool is_halted;
+
+    RegisterPair af;
+    RegisterPair bc;
+    RegisterPair de;   
+    RegisterPair hl;
 
     uint16_t sp;
     uint16_t pc;
 
     MMU &mmu;
+    Timer &timer;
+    InterruptController &interrupt_controller;
     
-    bool is_interrupt_enabled;
-
     uint64_t total_cycle;
     const uint8_t cpu_clock_cycles[256] = {
     //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -136,6 +141,26 @@ private:
         8,  12, 12, 0,  12, 16, 8,  16, 8,  16, 12, 0,  12, 0,  8,  16, // D
         12, 12, 8,  0,  0,  16, 8,  16, 16, 4,  16, 0,  0,  0,  8,  16, // E
         12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4,  0,  0,  8,  16  // F
+    };
+
+    const uint8_t cpu_cb_clock_cycles[256] = {
+    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 0
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 1
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 2
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 3
+        8,  8,  8,  8,  8,  8,  12, 8,  8,  8,  8,  8,  8,  8,  12, 8,  // 4
+        8,  8,  8,  8,  8,  8,  12, 8,  8,  8,  8,  8,  8,  8,  12, 8,  // 5
+        8,  8,  8,  8,  8,  8,  12, 8,  8,  8,  8,  8,  8,  8,  12, 8,  // 6
+        8,  8,  8,  8,  8,  8,  12, 8,  8,  8,  8,  8,  8,  8,  12, 8,  // 7
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 8
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // 9
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // A
+        8,  8,  8,  8,  8,  8, 16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // B
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // C
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // D
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8,  // E
+        8,  8,  8,  8,  8,  8,  16, 8,  8,  8,  8,  8,  8,  8,  16, 8   // F
     };
 };
 

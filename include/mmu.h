@@ -7,10 +7,13 @@
 
 constexpr uint32_t MEMORY_SIZE = 65536;
 
+class Timer;
+class InterruptController;
+
 class MMU {
 public:
 
-    MMU() noexcept;
+    MMU(InterruptController &interrupt_controller, Timer &timer) noexcept;
 
     [[nodiscard]] bool load_rom(std::string rom_path) noexcept;
 
@@ -19,6 +22,9 @@ public:
 
 private:
     uint8_t memory[MEMORY_SIZE] = {};
+    
+    InterruptController &interrupt_controller;
+    Timer &timer;
 };
 
 #endif

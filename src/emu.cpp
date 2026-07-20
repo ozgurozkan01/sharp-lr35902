@@ -1,4 +1,7 @@
 #include "../include/cpu.h"
+#include "../include/mmu.h"
+#include "../include/timer.h"
+#include "../include/interrupt_controller.h"
 
 #include <iostream>
 #include <stdint.h>
@@ -13,13 +16,16 @@ int main(int argc, char* argv[]) {
     
     std::string rom_path = argv[1];
 
-    MMU mmu;
+    Timer timer;
+    InterruptController interrupt_controller;
+
+    MMU mmu(interrupt_controller, timer);
 
     if (!mmu.load_rom(rom_path)) {
         return -1;
     }
     
-    CPU cpu(mmu);
+    CPU cpu(mmu, interrupt_controller, timer);
 
     bool is_running = true;
 

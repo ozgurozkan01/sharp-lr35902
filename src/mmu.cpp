@@ -1,15 +1,62 @@
 #include "../include/mmu.h"
+#include "../include/timer.h"
+#include "../include/interrupt_controller.h"
 #include <fstream>
 
-MMU::MMU() noexcept {
-
-}
+MMU::MMU(InterruptController &interrupt_controller, Timer &timer) noexcept :
+    timer(timer),
+    interrupt_controller(interrupt_controller)
+{}
 
 void MMU::write(uint16_t address, uint8_t value) noexcept {
+    if (address == 0xFF02) {
+        memory[address] = value; 
+
+        bool is_transfer_enabled = value & 0x80;
+        bool is_master = value & 0x01;
+
+        if (is_master && is_transfer_enabled)
+        {
+            char c = memory[0xFF01];
+            std::cout << c;
+            std::cout.flush();
+
+            memory[address] &= ~0x80;
+        }
+        return;
+    }
+    
+    if (address >= 0xFF04 && address <= 0xFF07) {
+        timer.write(address, value);
+        return;
+    }
+
+    if (address == 0xFF0F) {
+        interrupt_controller.write_if(value);
+        return;
+    }
+
+    if (address == 0xFFFF) {
+        interrupt_controller.write_ie(value);
+        return;
+    }
+
     memory[address] = value;
 }
 
 uint8_t MMU::read(uint16_t address) noexcept {
+    if (address >= 0xFF04 && address <= 0xFF07) {
+        return timer.read(address);
+    }
+    
+    if (address == 0xFF0F) {
+        return interrupt_controller.read_if();
+    }
+
+    if (address == 0xFFFF) {
+        return interrupt_controller.read_ie();
+    }
+
     return memory[address];
 }
 
