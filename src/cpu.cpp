@@ -822,6 +822,7 @@ void CPU::execute_instructions() noexcept {
             break;
         case 0xf3:
             interrupt_controller.reset_ime();
+            interrupt_controller.reset_pending_ei();
             pc++;
             break;
         case 0xf5:
@@ -868,7 +869,7 @@ void CPU::execute_instructions() noexcept {
             break;
         }
         case 0xfb:
-            interrupt_controller.set_ime();
+            interrupt_controller.set_pending_ei();
             pc++;
             break;
         case 0xfe:
