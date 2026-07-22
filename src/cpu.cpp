@@ -787,6 +787,8 @@ void CPU::execute_instructions() noexcept {
             reset_flag(Flag::subtraction);
 
             pc += 2;
+            tick_internal();
+            tick_internal();
             break;
         }
         case 0xe9:
@@ -851,11 +853,13 @@ void CPU::execute_instructions() noexcept {
             reset_flag(Flag::subtraction);
 
             pc += 2;
+            tick_internal();
             break;
         }
         case 0xf9:
             sp = hl.word;
             pc++;
+            tick_internal();
             break;
         case 0xfa:
         {
@@ -883,9 +887,6 @@ void CPU::execute_instructions() noexcept {
             std::cout << "DEFAULT CASE RAN : 0x" << std::hex << (int)opcode << std::endl;
             exit(-1);
     }
-
-    timer.tick(cycle, mmu);
-    update_clock_cycles(cycle);
 }
 
 void CPU::execute_cb_instructions() noexcept {
@@ -1363,8 +1364,6 @@ void CPU::execute_cb_instructions() noexcept {
             exit(-1);
     }
 
-    update_clock_cycles(cycle);
-    timer.tick(cycle, mmu);
     pc += 2;
 }
 
@@ -1377,12 +1376,13 @@ void CPU::execute_interrupts() noexcept {
 
     interrupt_controller.reset_ime();
 
+    tick_internal();
+    
     push(pc); 
 
     pc = interrupt_controller.get_interrupt_vector(interrupt_bit);
 
-    timer.tick(20, mmu);
-    update_clock_cycles(20);
+    tick_internal();
 }
 
 void CPU::adc(uint8_t value) noexcept {
@@ -1419,6 +1419,7 @@ void CPU::add(uint16_t value) noexcept {
     (old_hl + value) > 0xFFFF ? set_flag(Flag::carry) : reset_flag(Flag::carry);
 
     pc++;
+    tick_internal();
 }
 
 void CPU::bitwise_or(uint8_t value) noexcept {
@@ -1465,14 +1466,16 @@ void CPU::call() noexcept {
 }
 
 void CPU::call_cc(bool condition) noexcept {
-    if (condition)
-    {
-        call();
-        update_clock_cycles(12);
-        timer.tick(12, mmu);
-
+    uint8_t low = mmu.read(pc + 1);
+    uint8_t high = mmu.read(pc + 2);
+    
+    if (condition) {
+        uint16_t jump_address = (high << 8) | low;
+        push(pc + 3);
+        pc = jump_address;
         return;
-    }
+    } 
+        
     pc += 3;
 }
 
@@ -1517,6 +1520,7 @@ void CPU::inc(uint8_t &reg8) noexcept {
 void CPU::inc(uint16_t &reg16) noexcept {
     reg16++;
     pc++;
+    tick_internal();
 }
 
 void CPU::daa() noexcept {
@@ -1558,23 +1562,26 @@ void CPU::dec(uint8_t &reg8) noexcept {
 void CPU::dec(uint16_t &reg16) noexcept {
     reg16--;
     pc++;
+    tick_internal();
 }
 
 void CPU::jp() noexcept {
     uint8_t low = mmu.read(pc + 1);
     uint8_t high = mmu.read(pc + 2);
     pc = (high << 8) | low;
+    tick_internal();
 }
 
 void CPU::jp_cc(bool condition) noexcept {
-    if (condition)
-    {
-        jp();
-        update_clock_cycles(4);
-        timer.tick(4, mmu);
+    uint8_t low = mmu.read(pc + 1);
+    uint8_t high = mmu.read(pc + 2);
+    
+    if (condition) {
+        pc = (high << 8) | low;
+        tick_internal();
         return;
-    }
-
+    } 
+    
     pc += 3;
 }
 
@@ -1584,18 +1591,19 @@ void CPU::jr() noexcept {
     int8_t signed_offset = static_cast<int8_t>(unsigned_offset);
     pc += signed_offset;
     pc += 2;
+    tick_internal();
 }
 
 void CPU::jr_cc(bool condition) noexcept {
-
-    if (condition)
-    {
-        jr();
-        update_clock_cycles(4);
-        timer.tick(4, mmu);
-        return;
-    }
+    uint8_t unsigned_offset = mmu.read(pc + 1);
     
+    if (condition) {
+        pc += static_cast<int8_t>(unsigned_offset);
+        pc += 2;
+        tick_internal();
+        return;
+    } 
+        
     pc += 2;
 }
 
@@ -1632,6 +1640,7 @@ void CPU::ldh_write(uint8_t offset) noexcept {
 }
 
 void CPU::push(const uint16_t address) noexcept {
+    tick_internal();
     mmu.write(sp - 1, (address >> 8) & 0xFF);
     mmu.write(sp - 2, address & 0xFF);
     sp -= 2;
@@ -1652,16 +1661,16 @@ uint16_t CPU::pop() noexcept {
 
 void CPU::ret() noexcept {
     pc = pop();
+    tick_internal();
 }
 
 void CPU::ret_cc(bool condition) noexcept {
-    if (condition)
-    {
+    tick_internal();
+    if (condition) {
         ret();
-        update_clock_cycles(12);
-        timer.tick(12, mmu);
         return;
     }
+
     pc++;
 }
 
@@ -1880,6 +1889,11 @@ bool CPU::get_flag(Flag flag) const noexcept { return (af.bytes.low & static_cas
 
 void CPU::update_clock_cycles(uint8_t cycle) noexcept {
     total_cycle += cycle;
+}
+
+void CPU::tick_internal() noexcept {
+    timer.tick(4, mmu);
+    update_clock_cycles(4);
 }
 
 void CPU::print_debug() noexcept {

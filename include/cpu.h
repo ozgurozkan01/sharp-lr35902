@@ -39,6 +39,8 @@ private:
     void print_debug() noexcept;
     void update_clock_cycles(uint8_t cycle) noexcept;
 
+    void tick_internal() noexcept;
+
     void set_flag(Flag flag) noexcept;
     void reset_flag(Flag flag) noexcept;
     [[nodiscard]] bool get_flag(Flag flag) const noexcept;

@@ -9,6 +9,8 @@ MMU::MMU(InterruptController &interrupt_controller, Timer &timer) noexcept :
 {}
 
 void MMU::write(uint16_t address, uint8_t value) noexcept {
+    timer.tick(4, *this);
+
     if (address == 0xFF02) {
         memory[address] = value; 
 
@@ -45,6 +47,8 @@ void MMU::write(uint16_t address, uint8_t value) noexcept {
 }
 
 uint8_t MMU::read(uint16_t address) noexcept {
+    timer.tick(4, *this);
+    
     if (address >= 0xFF04 && address <= 0xFF07) {
         return timer.read(address);
     }
