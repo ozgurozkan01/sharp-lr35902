@@ -26,7 +26,7 @@ The emulator currently passes Blargg's instruction tests and the instruction tim
 .\main.exe roms/11-op a,(hl)                 PASSED
 .\main.exe roms/cpu-instr                    PASSED
 .\main.exe roms/instr-timing                 PASSED
-.\main.exe roms/mem-timing                 PASSED
+.\main.exe roms/mem-timing                   PASSED
 ```
 
 ### Building
