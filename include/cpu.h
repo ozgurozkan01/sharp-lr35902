@@ -24,8 +24,6 @@ public:
     explicit CPU(MMU &mmu, InterruptController &interrupt_controller, Timer &timer) noexcept;
 
     void execute_instructions() noexcept;
-    void execute_cb_instructions() noexcept;
-    void execute_interrupts() noexcept;
 
     enum class Flag : uint8_t {
         carry       = 0x10,
@@ -34,16 +32,19 @@ public:
         zero        = 0x80
     };
 
-    uint8_t get_a()  { return af.bytes.high; }
-    uint8_t get_f()  { return af.bytes.low; }
+    uint8_t get_a()  const noexcept { return af.bytes.high; }
+    uint8_t get_f()  const noexcept { return af.bytes.low; }
 
-    uint16_t get_pc() { return pc; }
-    uint16_t get_sp() { return sp; }
-    uint16_t get_bc() { return bc.word; }
-    uint16_t get_de() { return de.word; }
-    uint16_t get_hl() { return hl.word; }
+    uint16_t get_pc() const noexcept { return pc; }
+    uint16_t get_sp() const noexcept { return sp; }
+    uint16_t get_bc() const noexcept { return bc.word; }
+    uint16_t get_de() const noexcept { return de.word; }
+    uint16_t get_hl() const noexcept { return hl.word; }
 
 private:
+    void execute_cb_instructions() noexcept;
+    void execute_interrupts() noexcept;
+    
     void print_debug() noexcept;
     void update_clock_cycles(uint8_t cycle) noexcept;
 

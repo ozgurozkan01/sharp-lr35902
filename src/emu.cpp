@@ -7,6 +7,8 @@
 #include <iostream>
 #include <stdint.h>
 
+#define DISASSEMBLER_MOD false
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2)
@@ -33,7 +35,9 @@ int main(int argc, char* argv[]) {
 
     while (is_running)
     {
+    #if DISASSEMBLER_MOD
         disassembler.decode();
+    #endif
         cpu.execute_instructions();
     }
 
