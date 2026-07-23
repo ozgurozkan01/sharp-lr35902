@@ -4,8 +4,6 @@
 #include "../include/interrupt_controller.h"
 #include <iomanip>
 
-#define DEBUG_MOD false
-
 CPU::CPU(MMU &mmu, InterruptController &interrupt_controller, Timer &timer) noexcept :
     mmu(mmu),
     timer(timer),
@@ -46,11 +44,6 @@ void CPU::execute_instructions() noexcept {
     }
     
     const uint8_t opcode = mmu.read(pc);
-    
-
-#if DEBUG_MOD
-    print_debug();
-#endif
 
     switch (opcode)
     {

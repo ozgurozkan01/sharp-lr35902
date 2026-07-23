@@ -32,6 +32,8 @@ public:
         zero        = 0x80
     };
 
+    bool get_halt()  const noexcept { return is_halted; }
+    
     uint8_t get_a()  const noexcept { return af.bytes.high; }
     uint8_t get_f()  const noexcept { return af.bytes.low; }
 
@@ -40,6 +42,8 @@ public:
     uint16_t get_bc() const noexcept { return bc.word; }
     uint16_t get_de() const noexcept { return de.word; }
     uint16_t get_hl() const noexcept { return hl.word; }
+
+    uint64_t get_total_cycles() const noexcept { return total_cycle; }
 
 private:
     void execute_cb_instructions() noexcept;
