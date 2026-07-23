@@ -1,6 +1,7 @@
 #include "../include/cpu.h"
 #include "../include/mmu.h"
 #include "../include/timer.h"
+#include "../disassembler/disassembler.h"
 #include "../include/interrupt_controller.h"
 
 #include <iostream>
@@ -26,14 +27,15 @@ int main(int argc, char* argv[]) {
     }
     
     CPU cpu(mmu, interrupt_controller, timer);
+    Disassembler disassembler(mmu, cpu);
 
     bool is_running = true;
 
     while (is_running)
     {
+        disassembler.decode();
         cpu.execute_instructions();
     }
-    
 
     return 0;
 }
