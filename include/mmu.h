@@ -13,7 +13,7 @@ class InterruptController;
 class MMU {
 public:
 
-    MMU(InterruptController &interrupt_controller, Timer &timer) noexcept;
+    explicit MMU(InterruptController &interrupt_controller, Timer &timer) noexcept;
 
     [[nodiscard]] bool load_rom(std::string rom_path) noexcept;
 

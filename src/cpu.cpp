@@ -46,7 +46,6 @@ void CPU::execute_instructions() noexcept {
     }
     
     const uint8_t opcode = mmu.read(pc);
-    uint8_t cycle = cpu_clock_cycles[opcode];
     
 
 #if DEBUG_MOD
@@ -891,7 +890,6 @@ void CPU::execute_instructions() noexcept {
 
 void CPU::execute_cb_instructions() noexcept {
     uint8_t opcode = mmu.read(pc + 1);
-    uint8_t cycle = cpu_cb_clock_cycles[opcode];
 
     switch (opcode)
     {

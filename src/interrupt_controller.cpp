@@ -1,6 +1,6 @@
 #include "../include/interrupt_controller.h"
 
-InterruptController::InterruptController() :
+InterruptController::InterruptController() noexcept :
     interrupt_enable(0x00),
     interrupt_flag(0xE1),
     interrupt_master_enable(false),

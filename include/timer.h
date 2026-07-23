@@ -8,6 +8,7 @@ class MMU;
 
 class Timer {
 public:
+    Timer() = default;
     
     void tick(uint8_t cycle, MMU &mmu) noexcept;
 

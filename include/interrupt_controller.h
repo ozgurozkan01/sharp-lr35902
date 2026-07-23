@@ -14,7 +14,7 @@ enum class InterruptTypes : uint8_t {
 
 class InterruptController {
 public:
-    InterruptController();
+    explicit InterruptController() noexcept;
 
     uint8_t get_interrupt_vector(uint8_t interrupt_bit) noexcept;
 
