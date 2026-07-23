@@ -34,6 +34,15 @@ public:
         zero        = 0x80
     };
 
+    uint8_t get_a()  { return af.bytes.high; }
+    uint8_t get_f()  { return af.bytes.low; }
+
+    uint16_t get_pc() { return pc; }
+    uint16_t get_sp() { return sp; }
+    uint16_t get_bc() { return bc.word; }
+    uint16_t get_de() { return de.word; }
+    uint16_t get_hl() { return hl.word; }
+
 private:
     void print_debug() noexcept;
     void update_clock_cycles(uint8_t cycle) noexcept;
