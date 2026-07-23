@@ -1,13 +1,14 @@
 #include "../include/cpu.h"
 #include "../include/mmu.h"
 #include "../include/timer.h"
-#include "../disassembler/disassembler.h"
+#include "../debugger/disassembler.h"
+#include "../debugger/debugger.h"
 #include "../include/interrupt_controller.h"
 
 #include <iostream>
 #include <stdint.h>
 
-#define DISASSEMBLER_MOD false
+#define DEBUGGER_MODE false
 
 int main(int argc, char* argv[]) {
 
@@ -29,14 +30,15 @@ int main(int argc, char* argv[]) {
     }
     
     CPU cpu(mmu, interrupt_controller, timer);
-    Disassembler disassembler(mmu, cpu);
+    Disassembler disassembler(mmu);
+    Debugger debugger(cpu, mmu, timer, interrupt_controller, disassembler);
 
     bool is_running = true;
 
     while (is_running)
     {
-    #if DISASSEMBLER_MOD
-        disassembler.decode();
+    #if DEBUGGER_MODE
+        debugger.print();
     #endif
         cpu.execute_instructions();
     }
